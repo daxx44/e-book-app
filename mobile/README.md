@@ -15,9 +15,12 @@ Mobile client for the Digital Ebook Library (Rails API backend).
 | Platform | URL |
 |----------|-----|
 | Android emulator | `http://10.0.2.2:3000/api/v1` |
-| iOS simulator / desktop | `http://localhost:3000/api/v1` |
+| Physical Android device | `http://<your-pc-wifi-ip>:3000/api/v1` |
 
-Configure in `lib/core/config/api_config.dart`.
+Configure in `lib/core/config/api_config.dart`:
+
+- **Emulator:** set `androidLanHost = null`
+- **Real phone:** set `androidLanHost` to your PC Wi-Fi IP (run `ipconfig` on Windows)
 
 ## Run
 
