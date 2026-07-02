@@ -7,8 +7,8 @@ class EbookRepository {
 
   final ApiClient _apiClient;
 
-  Future<List<Ebook>> fetchEbooks() async {
-    final body = await _apiClient.getJson('/ebooks');
+  Future<List<Ebook>> fetchEbooks({String sort = 'recent'}) async {
+    final body = await _apiClient.getJson('/ebooks', query: {'sort': sort});
     final data = body['data'] as List<dynamic>? ?? [];
     return data.map((item) => Ebook.fromJson(item as Map<String, dynamic>)).toList();
   }
@@ -18,8 +18,8 @@ class EbookRepository {
     return Ebook.fromJson(body['data'] as Map<String, dynamic>);
   }
 
-  Future<List<Ebook>> searchEbooks(String query) async {
-    final body = await _apiClient.getJson('/ebooks/search', query: {'q': query});
+  Future<List<Ebook>> searchEbooks(String query, {String sort = 'recent'}) async {
+    final body = await _apiClient.getJson('/ebooks/search', query: {'q': query, 'sort': sort});
     final data = body['data'] as List<dynamic>? ?? [];
     return data.map((item) => Ebook.fromJson(item as Map<String, dynamic>)).toList();
   }

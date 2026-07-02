@@ -17,7 +17,7 @@ class EbookLibraryApp extends StatelessWidget {
       title: AppConstants.appName,
       theme: AppTheme.light(),
       debugShowCheckedModeBanner: false,
-      initialRoute: AppRoutes.library,
+      initialRoute: AppRoutes.splash,
       getPages: AppPages.pages,
     );
   }

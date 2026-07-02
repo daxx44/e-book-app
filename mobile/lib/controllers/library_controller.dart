@@ -1,5 +1,5 @@
-import 'dart:io';
-
+import 'package:frontend/core/utils/app_feedback.dart';
+import 'package:frontend/core/utils/app_haptics.dart';
 import 'package:frontend/core/network/api_exception.dart';
 import 'package:frontend/models/ebook.dart';
 import 'package:frontend/repositories/ebook_repository.dart';
@@ -7,6 +7,7 @@ import 'package:frontend/routes/app_pages.dart';
 import 'package:get/get.dart';
 import 'package:open_filex/open_filex.dart';
 import 'package:path_provider/path_provider.dart';
+import 'dart:io';
 
 enum LibraryStatus { loading, success, empty, error }
 
@@ -21,6 +22,7 @@ class LibraryController extends GetxController {
   final RxString errorMessage = ''.obs;
   final RxBool isDeleting = false.obs;
   final RxBool isDownloading = false.obs;
+  final RxString sortBy = 'recent'.obs;
 
   @override
   void onInit() {
@@ -33,7 +35,7 @@ class LibraryController extends GetxController {
     errorMessage.value = '';
 
     try {
-      final results = await _repository.fetchEbooks();
+      final results = await _repository.fetchEbooks(sort: sortBy.value);
       ebooks.assignAll(results);
       status.value = results.isEmpty ? LibraryStatus.empty : LibraryStatus.success;
     } on ApiException catch (error) {
@@ -51,11 +53,11 @@ class LibraryController extends GetxController {
       await _repository.deleteEbook(ebook.id);
       ebooks.removeWhere((item) => item.id == ebook.id);
       status.value = ebooks.isEmpty ? LibraryStatus.empty : LibraryStatus.success;
-      Get.snackbar('Deleted', '${ebook.title} was removed from your library.');
+      AppFeedback.success('Removed', message: '${ebook.title} was deleted.');
     } on ApiException catch (error) {
-      Get.snackbar('Delete failed', error.message);
+      AppFeedback.error('Delete failed', message: error.message);
     } catch (_) {
-      Get.snackbar('Delete failed', 'Please try again.');
+      AppFeedback.error('Delete failed', message: 'Please try again.');
     } finally {
       isDeleting.value = false;
     }
@@ -63,6 +65,7 @@ class LibraryController extends GetxController {
 
   Future<void> downloadEbook(Ebook ebook) async {
     isDownloading.value = true;
+    AppHaptics.light();
     try {
       final bytes = await _repository.downloadEbook(ebook.id);
       final directory = await getApplicationDocumentsDirectory();
@@ -71,26 +74,35 @@ class LibraryController extends GetxController {
       final file = File(savedPath);
       await file.writeAsBytes(bytes, flush: true);
 
-      Get.snackbar('Download complete', 'Saved to $safeName');
+      AppFeedback.success('Download complete', message: safeName);
       await OpenFilex.open(savedPath);
     } on ApiException catch (error) {
-      Get.snackbar('Download failed', error.message);
+      AppFeedback.error('Download failed', message: error.message);
     } catch (_) {
-      Get.snackbar('Download failed', 'Please try again.');
+      AppFeedback.error('Download failed', message: 'Please try again.');
     } finally {
       isDownloading.value = false;
     }
   }
 
+  void changeSort(String value) {
+    sortBy.value = value;
+    AppHaptics.selection();
+    loadEbooks();
+  }
+
   void openReader(Ebook ebook) {
+    AppHaptics.medium();
     Get.toNamed(AppRoutes.reader, arguments: ebook);
   }
 
   void openUpload() {
+    AppHaptics.light();
     Get.toNamed(AppRoutes.upload)?.then((_) => loadEbooks());
   }
 
   void openSearch() {
+    AppHaptics.light();
     Get.toNamed(AppRoutes.search)?.then((_) => loadEbooks());
   }
 }

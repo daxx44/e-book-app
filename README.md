@@ -259,6 +259,101 @@ Harmless on Windows when optional image modules are missing. The API still works
 
 ---
 
+## Docker (PostgreSQL only)
+
+Start PostgreSQL in Docker, run Rails locally against it:
+
+```powershell
+docker compose up -d
+cd backend
+$env:DATABASE_PASSWORD = "postgres"
+bundle exec rails db:create db:migrate db:seed
+bundle exec rails server
+```
+
+## Demo data (seeds)
+
+```powershell
+cd backend
+$env:DATABASE_PASSWORD = "postgres"
+bundle exec rails db:seed
+```
+
+Loads 3 sample PDF ebooks using the test fixture PDF.
+
+---
+
+## API overview
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/v1/health` | Health check |
+| GET | `/api/v1/ebooks?sort=recent\|title\|author` | List ebooks |
+| POST | `/api/v1/ebooks` | Upload PDF (multipart) |
+| GET | `/api/v1/ebooks/:id` | Ebook details |
+| GET | `/api/v1/ebooks/search?q=&sort=` | Search |
+| GET | `/api/v1/ebooks/:id/download` | Download PDF |
+| DELETE | `/api/v1/ebooks/:id` | Soft delete |
+
+Full reference: [docs/API.md](docs/API.md)
+
+---
+
+## Screenshots
+
+Capture demo screenshots and save to [docs/screenshots/](docs/screenshots/README.md):
+
+- Empty library, upload, bookshelf, search, reader, delete dialog, test output
+
+---
+
+## AI tools used
+
+See [docs/AI_USAGE.md](docs/AI_USAGE.md) for the full AI usage report required by the assignment.
+
+**Summary:** Cursor AI assisted with scaffolding, docs, and debugging. All code was reviewed, tested (`rspec`, `flutter test`), and verified on a physical Android device.
+
+---
+
+## Known limitations
+
+- **PDF only** — EPUB not supported (assignment minimum is PDF).
+- **No authentication** — single-user local library by design.
+- **No cloud storage** — files stored via Rails Active Storage on local disk.
+- **Cover images** — generated color covers with initials (not PDF thumbnails).
+- **Reader** — re-downloads PDF on open; cached in temp directory for the session.
+- **Physical device** — requires LAN IP + firewall rule or USB `adb reverse`.
+- **Pagination** — not implemented; suitable for personal libraries.
+
+---
+
+## Future improvements
+
+- User accounts and per-user libraries
+- EPUB reader support
+- PDF thumbnail generation for covers
+- Offline library cache
+- Pagination for large collections
+- Docker image for full backend (not just Postgres)
+- Recently read section on home screen
+
+---
+
+## Submission checklist
+
+| Deliverable | Location |
+|-------------|----------|
+| GitHub repository | Backend + mobile in monorepo |
+| README | This file |
+| API docs | [docs/API.md](docs/API.md) |
+| Manual testing | [docs/MANUAL_TESTING.md](docs/MANUAL_TESTING.md) |
+| AI usage report | [docs/AI_USAGE.md](docs/AI_USAGE.md) |
+| Screenshots | [docs/screenshots/](docs/screenshots/) |
+| Automated tests | `bundle exec rspec`, `flutter test` |
+| CI | [.github/workflows/ci.yml](.github/workflows/ci.yml) |
+
+---
+
 ## License
 
 Educational / assignment project — Sagar Fab International Company.

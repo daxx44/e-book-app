@@ -1,12 +1,14 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:flutter/material.dart';
 import 'package:frontend/core/constants/app_constants.dart';
 import 'package:frontend/core/network/api_exception.dart';
+import 'package:frontend/core/utils/app_feedback.dart';
+import 'package:frontend/core/utils/app_haptics.dart';
 import 'package:frontend/models/ebook.dart';
 import 'package:frontend/repositories/ebook_repository.dart';
 import 'package:frontend/routes/app_pages.dart';
-import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:open_filex/open_filex.dart';
 import 'package:path_provider/path_provider.dart';
@@ -24,6 +26,7 @@ class EbookSearchController extends GetxController {
   final Rx<SearchStatus> status = SearchStatus.idle.obs;
   final RxList<Ebook> results = <Ebook>[].obs;
   final RxString errorMessage = ''.obs;
+  final RxString sortBy = 'recent'.obs;
 
   void onQueryChanged(String value) {
     _debounce?.cancel();
@@ -42,7 +45,7 @@ class EbookSearchController extends GetxController {
     errorMessage.value = '';
 
     try {
-      final ebooks = await _repository.searchEbooks(trimmed);
+      final ebooks = await _repository.searchEbooks(trimmed, sort: sortBy.value);
       results.assignAll(ebooks);
       status.value = ebooks.isEmpty ? SearchStatus.empty : SearchStatus.success;
     } on ApiException catch (error) {
@@ -54,21 +57,31 @@ class EbookSearchController extends GetxController {
     }
   }
 
+  void changeSort(String value) {
+    sortBy.value = value;
+    AppHaptics.selection();
+    if (searchController.text.trim().isNotEmpty) {
+      search(searchController.text);
+    }
+  }
+
   void openReader(Ebook ebook) {
+    AppHaptics.medium();
     Get.toNamed(AppRoutes.reader, arguments: ebook);
   }
 
   Future<void> downloadEbook(Ebook ebook) async {
+    AppHaptics.light();
     try {
       final bytes = await _repository.downloadEbook(ebook.id);
       final directory = await getApplicationDocumentsDirectory();
       final safeName = ebook.filename ?? '${ebook.id}.pdf';
       final savedPath = '${directory.path}/$safeName';
       await File(savedPath).writeAsBytes(bytes, flush: true);
-      Get.snackbar('Download complete', 'Saved to $safeName');
+      AppFeedback.success('Download complete', message: safeName);
       await OpenFilex.open(savedPath);
     } on ApiException catch (error) {
-      Get.snackbar('Download failed', error.message);
+      AppFeedback.error('Download failed', message: error.message);
     }
   }
 
@@ -79,9 +92,9 @@ class EbookSearchController extends GetxController {
       if (results.isEmpty && searchController.text.trim().isNotEmpty) {
         status.value = SearchStatus.empty;
       }
-      Get.snackbar('Deleted', '${ebook.title} was removed.');
+      AppFeedback.success('Removed', message: '${ebook.title} was deleted.');
     } on ApiException catch (error) {
-      Get.snackbar('Delete failed', error.message);
+      AppFeedback.error('Delete failed', message: error.message);
     }
   }
 

@@ -3,7 +3,7 @@ import 'package:frontend/widgets/delete_confirmation_dialog.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  testWidgets('Delete confirmation dialog returns true when confirmed', (tester) async {
+  testWidgets('Delete confirmation sheet returns true when confirmed', (tester) async {
     bool? result;
 
     await tester.pumpWidget(

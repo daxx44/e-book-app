@@ -50,6 +50,10 @@ Response
 
 GET /ebooks
 
+Query parameters
+
+- `sort` (optional): `recent` (default), `title`, or `author`
+
 Response
 
 200 OK
@@ -77,6 +81,11 @@ Returns ebook details.
 ## Search
 
 GET /ebooks/search?q=flutter
+
+Query parameters
+
+- `q` — search term
+- `sort` (optional): `recent`, `title`, or `author`
 
 Search by
 

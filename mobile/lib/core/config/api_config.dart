@@ -30,7 +30,7 @@ class ApiConfig {
   static String get baseUrl {
     if (kIsWeb) return 'http://localhost:3000/api/v1';
     if (Platform.isAndroid) {
-      return 'http://${_androidHost}:3000/api/v1';
+      return 'http://$_androidHost:3000/api/v1';
     }
     return 'http://localhost:3000/api/v1';
   }

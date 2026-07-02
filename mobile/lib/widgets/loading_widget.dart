@@ -1,21 +1,30 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/widgets/shimmer_loading.dart';
 
+/// Page-level loading uses shimmer instead of spinners.
 class LoadingWidget extends StatelessWidget {
-  const LoadingWidget({super.key, this.message = 'Loading...'});
+  const LoadingWidget({
+    super.key,
+    this.variant = LoadingVariant.library,
+    this.progress,
+  });
 
-  final String message;
+  final LoadingVariant variant;
+  final double? progress;
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const CircularProgressIndicator(),
-          const SizedBox(height: 16),
-          Text(message, style: Theme.of(context).textTheme.bodyLarge),
-        ],
-      ),
-    );
+    switch (variant) {
+      case LoadingVariant.library:
+        return const LibraryShimmer();
+      case LoadingVariant.search:
+        return const SearchShimmer();
+      case LoadingVariant.reader:
+        return const ReaderShimmer();
+      case LoadingVariant.upload:
+        return UploadProgressShimmer(progress: progress ?? 0);
+    }
   }
 }
+
+enum LoadingVariant { library, search, reader, upload }

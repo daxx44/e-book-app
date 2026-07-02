@@ -48,4 +48,11 @@ class Ebook {
     if (fileType == 'application/pdf') return 'PDF';
     return fileType ?? 'File';
   }
+
+  String get formattedFileSize {
+    final size = fileSize;
+    if (size == null || size <= 0) return 'Unknown size';
+    if (size < 1024 * 1024) return '${(size / 1024).toStringAsFixed(1)} KB';
+    return '${(size / (1024 * 1024)).toStringAsFixed(1)} MB';
+  }
 }
