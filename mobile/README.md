@@ -1,16 +1,45 @@
-# frontend
+# Ebook Library — Flutter App
 
-A new Flutter project.
+Mobile client for the Digital Ebook Library (Rails API backend).
 
-## Getting Started
+## Stack (per MASTER_PROJECT_SPEC)
 
-This project is a starting point for a Flutter application.
+- Flutter 3 / Dart 3
+- **GetX** — state, DI, navigation
+- **Dio** — REST client
+- Material 3
+- syncfusion_flutter_pdfviewer, file_picker, path_provider
 
-A few resources to get you started if this is your first Flutter project:
+## API base URL
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+| Platform | URL |
+|----------|-----|
+| Android emulator | `http://10.0.2.2:3000/api/v1` |
+| iOS simulator / desktop | `http://localhost:3000/api/v1` |
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+Configure in `lib/core/config/api_config.dart`.
+
+## Run
+
+```bash
+cd mobile
+flutter pub get
+flutter run
+```
+
+Ensure the Rails backend is running on port 3000.
+
+## Test
+
+```bash
+flutter test
+flutter analyze
+```
+
+## Architecture
+
+```
+Screen → GetX Controller → Repository → ApiClient (Dio) → Rails API
+```
+
+See `../docs/MASTER_PROJECT_SPEC.md` Part 4 for full Flutter design.

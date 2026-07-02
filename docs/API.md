@@ -18,11 +18,31 @@ Fields
 
 - title
 - author
+- description (optional)
 - file
 
 Response
 
 201 Created
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": 1,
+    "title": "Clean Architecture",
+    "author": "Robert Martin",
+    "description": null,
+    "status": "active",
+    "file_type": "application/pdf",
+    "file_size": 328,
+    "filename": "sample.pdf",
+    "created_at": "2026-07-02T17:00:00Z",
+    "updated_at": "2026-07-02T17:00:00Z"
+  },
+  "meta": null
+}
+```
 
 ---
 
@@ -34,7 +54,15 @@ Response
 
 200 OK
 
-Returns all ebooks.
+Returns all **active** ebooks (excludes soft-deleted).
+
+```json
+{
+  "success": true,
+  "data": [ { "id": 1, "title": "..." } ],
+  "meta": { "total": 1 }
+}
+```
 
 ---
 
@@ -70,7 +98,19 @@ Downloads PDF.
 
 DELETE /ebooks/:id
 
-Deletes ebook.
+Soft deletes ebook (`status` → `deleted`). Hidden from list/search.
+
+Response
+
+200 OK
+
+```json
+{
+  "success": true,
+  "data": { "message": "Ebook deleted successfully." },
+  "meta": null
+}
+```
 
 ---
 
