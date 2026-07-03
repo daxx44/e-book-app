@@ -10,6 +10,7 @@ class Ebook {
     this.fileType,
     this.fileSize,
     this.filename,
+    this.coverUrl,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -22,6 +23,7 @@ class Ebook {
   final String? fileType;
   final int? fileSize;
   final String? filename;
+  final String? coverUrl;
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -35,6 +37,7 @@ class Ebook {
       fileType: json['file_type'] as String?,
       fileSize: json['file_size'] as int?,
       filename: json['filename'] as String?,
+      coverUrl: json['cover_url'] as String?,
       createdAt: DateTime.parse(json['created_at'] as String),
       updatedAt: DateTime.parse(json['updated_at'] as String),
     );
@@ -44,9 +47,22 @@ class Ebook {
 
   String get formattedUploadDate => DateFormat.yMMMd().format(createdAt);
 
+  bool get isPdf => fileType == 'application/pdf';
+
+  bool get isEpub => fileType == 'application/epub+zip';
+
+  bool get hasCover => coverUrl != null && coverUrl!.isNotEmpty;
+
   String get fileTypeLabel {
-    if (fileType == 'application/pdf') return 'PDF';
+    if (isPdf) return 'PDF';
+    if (isEpub) return 'EPUB';
     return fileType ?? 'File';
+  }
+
+  String get fileExtension {
+    if (isPdf) return '.pdf';
+    if (isEpub) return '.epub';
+    return '';
   }
 
   String get formattedFileSize {

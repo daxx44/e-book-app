@@ -61,6 +61,7 @@ Future<void> showBookDetailsSheet(
                       child: CoverPreview(
                         title: ebook.title,
                         subtitle: ebook.fileTypeLabel,
+                        coverUrl: ebook.coverUrl,
                         heroTag: 'book-cover-${ebook.id}',
                       ),
                     ),

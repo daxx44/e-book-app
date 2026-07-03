@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:frontend/core/theme/app_colors.dart';
 
@@ -6,12 +7,14 @@ class CoverPreview extends StatelessWidget {
     super.key,
     required this.title,
     this.subtitle,
+    this.coverUrl,
     this.heroTag,
     this.compact = false,
   });
 
   final String title;
   final String? subtitle;
+  final String? coverUrl;
   final String? heroTag;
   final bool compact;
 
@@ -29,8 +32,50 @@ class CoverPreview extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final hasCover = coverUrl != null && coverUrl!.isNotEmpty;
+    final content = hasCover ? _buildImageCover(context) : _buildGradientCover(context);
+
+    if (heroTag != null) {
+      return Hero(tag: heroTag!, child: Material(color: Colors.transparent, child: content));
+    }
+    return content;
+  }
+
+  Widget _buildImageCover(BuildContext context) {
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        CachedNetworkImage(
+          imageUrl: coverUrl!,
+          fit: BoxFit.cover,
+          placeholder: (_, __) => _buildGradientCover(context),
+          errorWidget: (_, __, ___) => _buildGradientCover(context),
+        ),
+        Positioned(
+          right: 8,
+          top: 8,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: Colors.black.withValues(alpha: 0.55),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Text(
+              subtitle ?? 'PDF',
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                  ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildGradientCover(BuildContext context) {
     final colors = gradientForTitle(title);
-    final content = Container(
+    return Container(
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
@@ -113,10 +158,5 @@ class CoverPreview extends StatelessWidget {
         ],
       ),
     );
-
-    if (heroTag != null) {
-      return Hero(tag: heroTag!, child: Material(color: Colors.transparent, child: content));
-    }
-    return content;
   }
 }

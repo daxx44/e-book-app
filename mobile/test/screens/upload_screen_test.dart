@@ -19,7 +19,8 @@ void main() {
 
     expect(find.text('Title'), findsOneWidget);
     expect(find.text('Author'), findsOneWidget);
-    expect(find.text('Choose PDF file'), findsOneWidget);
+    expect(find.text('Choose ebook file'), findsOneWidget);
+    expect(find.text('Add cover image'), findsOneWidget);
     expect(find.text('Upload to Library'), findsOneWidget);
   });
 }

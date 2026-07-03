@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:frontend/controllers/upload_controller.dart';
 import 'package:frontend/core/constants/app_spacing.dart';
@@ -73,7 +75,7 @@ class UploadScreen extends GetView<UploadController> {
                     Text('Upload a new ebook', style: Theme.of(context).textTheme.headlineSmall),
                     const SizedBox(height: AppSpacing.sm),
                     Text(
-                      'Add PDF files to your personal library with title and author details.',
+                      'Add PDF or EPUB files to your personal library with title and author details.',
                       style: Theme.of(context).textTheme.bodyMedium,
                       textAlign: TextAlign.center,
                     ),
@@ -101,7 +103,13 @@ class UploadScreen extends GetView<UploadController> {
               const SizedBox(height: AppSpacing.lg),
               Obx(() => _SelectedFileCard(
                     fileName: controller.selectedFileName.value,
-                    onPick: controller.pickPdf,
+                    onPick: controller.pickFile,
+                  )),
+              const SizedBox(height: AppSpacing.md),
+              Obx(() => _CoverImageCard(
+                    coverPath: controller.coverImagePath.value,
+                    onPick: controller.pickCoverImage,
+                    onRemove: controller.removeCoverImage,
                   )),
               if (controller.errorMessage.value.isNotEmpty) ...[
                 const SizedBox(height: AppSpacing.md),
@@ -143,6 +151,8 @@ class _SelectedFileCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final hasFile = fileName.isNotEmpty;
+    final isEpub = fileName.toLowerCase().endsWith('.epub');
+
     return Material(
       color: AppColors.surface,
       borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
@@ -160,7 +170,10 @@ class _SelectedFileCard extends StatelessWidget {
                   color: AppColors.accent.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Icon(Icons.picture_as_pdf_rounded, color: AppColors.accent),
+                child: Icon(
+                  isEpub ? Icons.auto_stories_rounded : Icons.picture_as_pdf_rounded,
+                  color: AppColors.accent,
+                ),
               ),
               const SizedBox(width: AppSpacing.md),
               Expanded(
@@ -168,19 +181,90 @@ class _SelectedFileCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      hasFile ? fileName : 'Choose PDF file',
+                      hasFile ? fileName : 'Choose ebook file',
                       style: Theme.of(context).textTheme.titleSmall,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
                     Text(
-                      hasFile ? 'Tap to change file' : 'PDF up to 100 MB',
+                      hasFile ? 'Tap to change file' : 'PDF or EPUB up to 100 MB',
                       style: Theme.of(context).textTheme.bodySmall,
                     ),
                   ],
                 ),
               ),
               const Icon(Icons.chevron_right_rounded, color: AppColors.textMuted),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _CoverImageCard extends StatelessWidget {
+  const _CoverImageCard({
+    required this.coverPath,
+    required this.onPick,
+    required this.onRemove,
+  });
+
+  final String coverPath;
+  final VoidCallback onPick;
+  final VoidCallback onRemove;
+
+  @override
+  Widget build(BuildContext context) {
+    final hasCover = coverPath.isNotEmpty;
+
+    return Material(
+      color: AppColors.surface,
+      borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+      child: InkWell(
+        onTap: onPick,
+        borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+        child: Padding(
+          padding: const EdgeInsets.all(AppSpacing.md),
+          child: Row(
+            children: [
+              Container(
+                width: 48,
+                height: 64,
+                decoration: BoxDecoration(
+                  color: AppColors.accent.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: hasCover
+                    ? ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: Image.file(File(coverPath), fit: BoxFit.cover),
+                      )
+                    : const Icon(Icons.image_outlined, color: AppColors.accent),
+              ),
+              const SizedBox(width: AppSpacing.md),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      hasCover ? 'Cover image selected' : 'Add cover image',
+                      style: Theme.of(context).textTheme.titleSmall,
+                    ),
+                    Text(
+                      hasCover ? 'Tap to change' : 'Optional · JPEG, PNG, or WebP',
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                  ],
+                ),
+              ),
+              if (hasCover)
+                IconButton(
+                  onPressed: onRemove,
+                  icon: const Icon(Icons.close_rounded, size: 20),
+                  color: AppColors.textMuted,
+                )
+              else
+                const Icon(Icons.chevron_right_rounded, color: AppColors.textMuted),
             ],
           ),
         ),

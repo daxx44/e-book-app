@@ -8,6 +8,7 @@ import 'package:frontend/core/utils/app_feedback.dart';
 import 'package:frontend/core/utils/app_haptics.dart';
 import 'package:frontend/repositories/ebook_repository.dart';
 import 'package:get/get.dart';
+import 'package:image_picker/image_picker.dart';
 
 class UploadController extends GetxController {
   UploadController({EbookRepository? repository})
@@ -20,6 +21,7 @@ class UploadController extends GetxController {
 
   final RxString selectedFileName = ''.obs;
   final RxString selectedFilePath = ''.obs;
+  final RxString coverImagePath = ''.obs;
   final RxBool isUploading = false.obs;
   final RxDouble uploadProgress = 0.0.obs;
   final RxString errorMessage = ''.obs;
@@ -27,12 +29,12 @@ class UploadController extends GetxController {
 
   String? _pickedFilePath;
 
-  Future<void> pickPdf() async {
+  Future<void> pickFile() async {
     errorMessage.value = '';
     AppHaptics.selection();
     final result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
-      allowedExtensions: const ['pdf'],
+      allowedExtensions: const ['pdf', 'epub'],
       withData: false,
     );
 
@@ -57,7 +59,25 @@ class UploadController extends GetxController {
     selectedFileName.value = file.name;
   }
 
-  /// Returns true when upload succeeds (UI handles navigation + success animation).
+  Future<void> pickCoverImage() async {
+    errorMessage.value = '';
+    AppHaptics.selection();
+    final picker = ImagePicker();
+    final image = await picker.pickImage(
+      source: ImageSource.gallery,
+      maxWidth: 1200,
+      maxHeight: 1800,
+      imageQuality: 85,
+    );
+
+    if (image == null) return;
+    coverImagePath.value = image.path;
+  }
+
+  void removeCoverImage() {
+    coverImagePath.value = '';
+  }
+
   Future<bool> upload() async {
     if (titleController.text.trim().isEmpty) {
       errorMessage.value = 'Title is required.';
@@ -66,7 +86,7 @@ class UploadController extends GetxController {
     }
 
     if (_pickedFilePath == null) {
-      errorMessage.value = 'Please select a PDF file.';
+      errorMessage.value = 'Please select a PDF or EPUB file.';
       AppHaptics.error();
       return false;
     }
@@ -82,6 +102,7 @@ class UploadController extends GetxController {
         description: descriptionController.text.trim(),
         filePath: _pickedFilePath!,
         fileName: selectedFileName.value,
+        coverPath: coverImagePath.value.isNotEmpty ? coverImagePath.value : null,
         onSendProgress: (sent, total) {
           if (total > 0) uploadProgress.value = sent / total;
         },

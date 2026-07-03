@@ -69,7 +69,7 @@ class LibraryController extends GetxController {
     try {
       final bytes = await _repository.downloadEbook(ebook.id);
       final directory = await getApplicationDocumentsDirectory();
-      final safeName = ebook.filename ?? '${ebook.id}.pdf';
+      final safeName = ebook.filename ?? '${ebook.id}${ebook.fileExtension}';
       final savedPath = '${directory.path}/$safeName';
       final file = File(savedPath);
       await file.writeAsBytes(bytes, flush: true);

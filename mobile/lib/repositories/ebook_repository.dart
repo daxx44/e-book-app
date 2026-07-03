@@ -30,6 +30,7 @@ class EbookRepository {
     String? description,
     required String filePath,
     String? fileName,
+    String? coverPath,
     void Function(int, int)? onSendProgress,
   }) async {
     final formData = FormData.fromMap({
@@ -38,8 +39,13 @@ class EbookRepository {
       if (description != null && description.isNotEmpty) 'description': description,
       'file': await MultipartFile.fromFile(
         filePath,
-        filename: fileName ?? 'ebook.pdf',
+        filename: fileName ?? 'ebook',
       ),
+      if (coverPath != null)
+        'cover': await MultipartFile.fromFile(
+          coverPath,
+          filename: 'cover.jpg',
+        ),
     });
 
     final body = await _apiClient.postMultipart(
