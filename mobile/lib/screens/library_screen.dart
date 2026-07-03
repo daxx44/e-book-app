@@ -1,15 +1,17 @@
 import 'package:flutter/material.dart';
-import 'package:frontend/core/constants/app_spacing.dart';
-import 'package:frontend/core/theme/app_colors.dart';
+import 'package:frontend/core/theme/library_shelf_theme.dart';
 import 'package:frontend/controllers/library_controller.dart';
+import 'package:frontend/core/utils/app_feedback.dart';
 import 'package:frontend/models/ebook.dart';
 import 'package:frontend/widgets/app_drawer.dart';
-import 'package:frontend/widgets/book_card.dart';
 import 'package:frontend/widgets/book_details_sheet.dart';
 import 'package:frontend/widgets/delete_confirmation_dialog.dart';
 import 'package:frontend/widgets/empty_state_widget.dart';
 import 'package:frontend/widgets/error_state_widget.dart';
-import 'package:frontend/widgets/library_header.dart';
+import 'package:frontend/widgets/library/bookshelf_row.dart';
+import 'package:frontend/widgets/library/library_bottom_nav.dart';
+import 'package:frontend/widgets/library/shelf_library_header.dart';
+import 'package:frontend/widgets/library/wooden_shelf_background.dart';
 import 'package:frontend/widgets/loading_widget.dart';
 import 'package:frontend/widgets/recently_read_section.dart';
 import 'package:frontend/widgets/sort_menu.dart';
@@ -28,49 +30,77 @@ class LibraryScreen extends GetView<LibraryController> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: LibraryShelfTheme.woodDark,
       drawer: const AppDrawer(),
-      floatingActionButton: FloatingActionButton.extended(
+      floatingActionButton: FloatingActionButton(
         onPressed: controller.openUpload,
-        elevation: 3,
-        highlightElevation: 6,
-        icon: const Icon(Icons.add_rounded),
-        label: const Text('Add book'),
+        backgroundColor: LibraryShelfTheme.fabBrown,
+        foregroundColor: Colors.white,
+        elevation: 6,
+        child: const Icon(Icons.add_rounded),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
-      body: Builder(
-        builder: (scaffoldContext) {
-          return Obx(() {
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                _libraryHeader(scaffoldContext, bookCount: _headerBookCount()),
-                Expanded(
-                  child: AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 350),
-                    switchInCurve: Curves.easeOutCubic,
-                    switchOutCurve: Curves.easeInCubic,
-                    child: _buildBody(scaffoldContext),
-                  ),
-                ),
-              ],
-            );
-          });
-        },
+      bottomNavigationBar: LibraryBottomNav(
+        current: LibraryNavItem.library,
+        onSearch: controller.openSearch,
+        onContinueReading: _continueReading,
+        onUpload: _showDownloadsHint,
+      ),
+      body: Stack(
+        fit: StackFit.expand,
+        children: [
+          const WoodenShelfBackground(),
+          Builder(
+            builder: (scaffoldContext) {
+              return Obx(() {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    ShelfLibraryHeader(
+                      bookCount: _headerBookCount(),
+                      onSearch: controller.openSearch,
+                      onMenu: () => Scaffold.of(scaffoldContext).openDrawer(),
+                      sortMenu: Obx(
+                        () => SortMenu(
+                          value: controller.sortBy.value,
+                          onChanged: controller.changeSort,
+                          iconOnly: true,
+                          dark: true,
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      child: AnimatedSwitcher(
+                        duration: const Duration(milliseconds: 350),
+                        switchInCurve: Curves.easeOutCubic,
+                        switchOutCurve: Curves.easeInCubic,
+                        child: _buildBody(scaffoldContext),
+                      ),
+                    ),
+                  ],
+                );
+              });
+            },
+          ),
+        ],
       ),
     );
   }
 
-  Widget _libraryHeader(BuildContext context, {required int bookCount}) {
-    return LibraryHeader(
-      bookCount: bookCount,
-      onSearch: controller.openSearch,
-      onFilter: () {},
-      onMenu: () => Scaffold.of(context).openDrawer(),
-      sortMenu: Obx(
-        () => SortMenu(value: controller.sortBy.value, onChanged: controller.changeSort),
-      ),
-    );
+  void _continueReading() {
+    final recent = controller.recentlyRead;
+    if (recent.isEmpty) {
+      AppFeedback.info('Reader', message: 'Open a book from your shelf to start reading.');
+      return;
+    }
+    final ebook = controller.ebooksById[recent.first.ebookId];
+    if (ebook != null) {
+      controller.openReader(ebook);
+    }
+  }
+
+  void _showDownloadsHint() {
+    AppFeedback.info('Downloads', message: 'Use the book menu on any title to save it to your device.');
   }
 
   Widget _buildBody(BuildContext context) {
@@ -94,55 +124,41 @@ class LibraryScreen extends GetView<LibraryController> {
       case LibraryStatus.success:
         return RefreshIndicator(
           key: ValueKey('success-${controller.ebooks.length}-${controller.recentlyRead.length}'),
-          color: AppColors.accent,
-          backgroundColor: AppColors.surface,
+          color: LibraryShelfTheme.navActive,
+          backgroundColor: LibraryShelfTheme.shelfMid,
           strokeWidth: 2.5,
           displacement: 56,
           onRefresh: controller.loadEbooks,
           child: Obx(() {
             final ebooks = controller.ebooks;
-            final hasRecent = controller.recentlyRead.isNotEmpty;
-            final grid = _gridLayoutFor(context);
+            final booksPerRow = _booksPerRow(context);
+            final shelfCount = ebooks.isEmpty ? 0 : (ebooks.length / booksPerRow).ceil();
 
             return CustomScrollView(
               physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
               slivers: [
                 SliverToBoxAdapter(
                   child: RecentlyReadSection(
+                    shelfStyle: true,
                     items: controller.recentlyRead,
                     ebooksById: controller.ebooksById,
                     onOpen: (ebook) => _openDetails(context, ebook),
                     onContinue: controller.openReader,
                   ),
                 ),
-                SliverToBoxAdapter(
-                  child: _LibrarySectionHeader(
-                    title: hasRecent ? 'All Books' : 'Your Books',
-                    count: ebooks.length,
-                  ),
-                ),
                 SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(AppSpacing.md, 0, AppSpacing.md, 108),
-                  sliver: SliverGrid(
-                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: grid.crossAxisCount,
-                      mainAxisSpacing: grid.mainAxisSpacing,
-                      crossAxisSpacing: grid.crossAxisSpacing,
-                      childAspectRatio: grid.childAspectRatio,
-                    ),
+                  padding: const EdgeInsets.only(top: 8, bottom: 100),
+                  sliver: SliverList(
                     delegate: SliverChildBuilderDelegate(
-                      (context, index) {
-                        final ebook = ebooks[index];
-                        return BookCard(
-                          key: ValueKey('library-book-${ebook.id}'),
-                          ebook: ebook,
-                          onTap: () => _openDetails(context, ebook),
-                          onRead: () => controller.openReader(ebook),
-                          onDownload: () => controller.downloadEbook(ebook),
-                          onDelete: () => _confirmDelete(context, ebook),
-                        );
-                      },
-                      childCount: ebooks.length,
+                      (context, shelfIndex) => BookshelfRow(
+                        books: _booksOnShelf(ebooks, shelfIndex, booksPerRow),
+                        booksPerRow: booksPerRow,
+                        onOpenDetails: (ebook) => _openDetails(context, ebook),
+                        onRead: controller.openReader,
+                        onDownload: controller.downloadEbook,
+                        onDelete: (ebook) => _confirmDelete(context, ebook),
+                      ),
+                      childCount: shelfCount,
                     ),
                   ),
                 ),
@@ -168,71 +184,15 @@ class LibraryScreen extends GetView<LibraryController> {
     if (confirmed == true) await controller.deleteEbook(ebook);
   }
 
-  static _LibraryGridLayout _gridLayoutFor(BuildContext context) {
+  static int _booksPerRow(BuildContext context) {
     final width = MediaQuery.sizeOf(context).width;
-    final isLandscape = MediaQuery.orientationOf(context) == Orientation.landscape;
-
-    if (width >= 900) {
-      return const _LibraryGridLayout(crossAxisCount: 4, childAspectRatio: 0.52);
-    }
-    if (width >= 600 || isLandscape) {
-      return const _LibraryGridLayout(crossAxisCount: 3, childAspectRatio: 0.52);
-    }
-    return const _LibraryGridLayout(crossAxisCount: 2, childAspectRatio: 0.50);
+    if (width >= 700) return 4;
+    if (width >= 480) return 3;
+    return 2;
   }
-}
 
-class _LibraryGridLayout {
-  const _LibraryGridLayout({
-    required this.crossAxisCount,
-    required this.childAspectRatio,
-  });
-
-  final int crossAxisCount;
-  final double childAspectRatio;
-  final double mainAxisSpacing = 20;
-  final double crossAxisSpacing = 14;
-}
-
-class _LibrarySectionHeader extends StatelessWidget {
-  const _LibrarySectionHeader({
-    required this.title,
-    required this.count,
-  });
-
-  final String title;
-  final int count;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(AppSpacing.md, AppSpacing.md, AppSpacing.md, AppSpacing.sm + 4),
-      child: Row(
-        children: [
-          Text(
-            title,
-            style: theme.textTheme.titleMedium,
-          ),
-          const SizedBox(width: AppSpacing.sm),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-            decoration: BoxDecoration(
-              color: AppColors.surfaceSoft,
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: AppColors.secondary.withValues(alpha: 0.4)),
-            ),
-            child: Text(
-              '$count',
-              style: theme.textTheme.labelSmall?.copyWith(
-                color: AppColors.textSecondary,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
+  static List<Ebook> _booksOnShelf(List<Ebook> ebooks, int shelfIndex, int booksPerRow) {
+    final start = shelfIndex * booksPerRow;
+    return ebooks.skip(start).take(booksPerRow).toList();
   }
 }

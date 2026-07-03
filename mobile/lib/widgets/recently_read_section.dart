@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/core/constants/app_spacing.dart';
 import 'package:frontend/core/theme/app_colors.dart';
+import 'package:frontend/core/theme/library_shelf_theme.dart';
 import 'package:frontend/core/utils/app_haptics.dart';
 import 'package:frontend/models/ebook.dart';
 import 'package:frontend/models/recent_read_entry.dart';
@@ -15,12 +16,14 @@ class RecentlyReadSection extends StatelessWidget {
     required this.ebooksById,
     required this.onOpen,
     required this.onContinue,
+    this.shelfStyle = false,
   });
 
   final List<RecentReadItem> items;
   final Map<int, Ebook> ebooksById;
   final void Function(Ebook ebook) onOpen;
   final void Function(Ebook ebook) onContinue;
+  final bool shelfStyle;
 
   @override
   Widget build(BuildContext context) {
@@ -33,6 +36,9 @@ class RecentlyReadSection extends StatelessWidget {
 
     final theme = Theme.of(context);
 
+    final titleColor = shelfStyle ? LibraryShelfTheme.headerText : null;
+    final accentColor = shelfStyle ? LibraryShelfTheme.navActive : AppColors.accent;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -42,10 +48,10 @@ class RecentlyReadSection extends StatelessWidget {
             children: [
               Text(
                 'Continue Reading',
-                style: theme.textTheme.titleMedium,
+                style: theme.textTheme.titleMedium?.copyWith(color: titleColor),
               ),
               const Spacer(),
-              Icon(Icons.play_circle_outline_rounded, size: 20, color: AppColors.accent),
+              Icon(Icons.play_circle_outline_rounded, size: 20, color: accentColor),
             ],
           ),
         ),
@@ -62,6 +68,7 @@ class RecentlyReadSection extends StatelessWidget {
               return _RecentlyReadCard(
                 ebook: ebook,
                 item: item,
+                shelfStyle: shelfStyle,
                 onTap: () {
                   AppHaptics.light();
                   onContinue(ebook);
@@ -80,12 +87,14 @@ class _RecentlyReadCard extends StatelessWidget {
   const _RecentlyReadCard({
     required this.ebook,
     required this.item,
+    required this.shelfStyle,
     required this.onTap,
     required this.onOpenDetails,
   });
 
   final Ebook ebook;
   final RecentReadItem item;
+  final bool shelfStyle;
   final VoidCallback onTap;
   final VoidCallback onOpenDetails;
 
@@ -134,6 +143,7 @@ class _RecentlyReadCard extends StatelessWidget {
                         subtitle: ebook.fileTypeLabel,
                         coverUrl: ebook.coverUrl,
                         compact: true,
+                        showFormatBadge: false,
                       ),
                       Positioned(
                         left: 0,
@@ -144,7 +154,7 @@ class _RecentlyReadCard extends StatelessWidget {
                             value: item.progress.clamp(0.0, 1.0),
                             minHeight: 3,
                             backgroundColor: Colors.black26,
-                            color: AppColors.accent,
+                            color: shelfStyle ? LibraryShelfTheme.navActive : AppColors.accent,
                           ),
                         ),
                       ),
@@ -160,7 +170,9 @@ class _RecentlyReadCard extends StatelessWidget {
                         ebook.title,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: theme.textTheme.titleSmall,
+                        style: theme.textTheme.titleSmall?.copyWith(
+                          color: shelfStyle ? LibraryShelfTheme.headerText : null,
+                        ),
                       ),
                       const SizedBox(height: 3),
                       Row(
@@ -170,15 +182,17 @@ class _RecentlyReadCard extends StatelessWidget {
                               '${item.progressPercent}% · $_timeLabel',
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: theme.textTheme.labelSmall?.copyWith(color: AppColors.textMuted),
+                              style: theme.textTheme.labelSmall?.copyWith(
+                                color: shelfStyle ? LibraryShelfTheme.headerMuted : AppColors.textMuted,
+                              ),
                             ),
                           ),
                           GestureDetector(
                             onTap: onOpenDetails,
-                            child: const Icon(
+                            child: Icon(
                               Icons.info_outline_rounded,
                               size: 15,
-                              color: AppColors.textMuted,
+                              color: shelfStyle ? LibraryShelfTheme.headerMuted : AppColors.textMuted,
                             ),
                           ),
                         ],
