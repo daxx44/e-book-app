@@ -18,7 +18,7 @@ class ShelfLibraryHeader extends StatelessWidget {
   final Widget sortMenu;
 
   String get _countLabel {
-    if (bookCount == 0) return 'No books yet';
+    if (bookCount == 0) return '0 Books';
     if (bookCount == 1) return '1 Book';
     return '$bookCount Books';
   }

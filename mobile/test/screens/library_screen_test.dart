@@ -51,7 +51,7 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 500));
 
-    expect(find.text('Book One'), findsOneWidget);
+    expect(find.text('Book One'), findsWidgets);
     expect(find.text('My Library'), findsOneWidget);
   });
 }

@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/core/constants/app_spacing.dart';
-import 'package:frontend/core/theme/app_colors.dart';
 import 'package:frontend/core/theme/library_shelf_theme.dart';
 import 'package:frontend/core/utils/app_haptics.dart';
 import 'package:frontend/models/ebook.dart';
 import 'package:frontend/models/recent_read_entry.dart';
-import 'package:frontend/widgets/cover_preview.dart';
+import 'package:frontend/widgets/library/bookshelf_row.dart';
+import 'package:frontend/widgets/library/realistic_book_visual.dart';
+import 'package:frontend/widgets/library/wooden_shelf_plank.dart';
 import 'package:frontend/widgets/scale_on_press.dart';
 import 'package:intl/intl.dart';
 
@@ -35,9 +36,8 @@ class RecentlyReadSection extends StatelessWidget {
     if (books.isEmpty) return const SizedBox.shrink();
 
     final theme = Theme.of(context);
-
     final titleColor = shelfStyle ? LibraryShelfTheme.headerText : null;
-    final accentColor = shelfStyle ? LibraryShelfTheme.navActive : AppColors.accent;
+    final accentColor = shelfStyle ? LibraryShelfTheme.navActive : null;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -51,24 +51,23 @@ class RecentlyReadSection extends StatelessWidget {
                 style: theme.textTheme.titleMedium?.copyWith(color: titleColor),
               ),
               const Spacer(),
-              Icon(Icons.play_circle_outline_rounded, size: 20, color: accentColor),
+              Icon(Icons.play_circle_outline_rounded, size: 22, color: accentColor),
             ],
           ),
         ),
         SizedBox(
-          height: 210,
+          height: ShelfMetrics.continueReadingStripHeight,
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.fromLTRB(AppSpacing.md, 0, AppSpacing.md, AppSpacing.sm),
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
             itemCount: books.length,
             separatorBuilder: (_, __) => const SizedBox(width: 14),
             itemBuilder: (context, index) {
               final item = books[index].$1;
               final ebook = books[index].$2!;
-              return _RecentlyReadCard(
+              return _ContinueReadingCard(
                 ebook: ebook,
                 item: item,
-                shelfStyle: shelfStyle,
                 onTap: () {
                   AppHaptics.light();
                   onContinue(ebook);
@@ -83,18 +82,16 @@ class RecentlyReadSection extends StatelessWidget {
   }
 }
 
-class _RecentlyReadCard extends StatelessWidget {
-  const _RecentlyReadCard({
+class _ContinueReadingCard extends StatelessWidget {
+  const _ContinueReadingCard({
     required this.ebook,
     required this.item,
-    required this.shelfStyle,
     required this.onTap,
     required this.onOpenDetails,
   });
 
   final Ebook ebook;
   final RecentReadItem item;
-  final bool shelfStyle;
   final VoidCallback onTap;
   final VoidCallback onOpenDetails;
 
@@ -110,99 +107,88 @@ class _RecentlyReadCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final bookWidth = ShelfMetrics.continueBookWidth;
+    final bookHeight = ShelfMetrics.resolvedBookHeight(bookWidth);
+    final restInset = ShelfMetrics.bookRestInset;
 
     return ScaleOnPress(
       onTap: onTap,
+      scale: 0.97,
       child: SizedBox(
-        width: 132,
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            color: AppColors.surface,
-            borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-            border: Border.all(color: AppColors.secondary.withValues(alpha: 0.45)),
-            boxShadow: [
-              BoxShadow(
-                color: AppColors.textPrimary.withValues(alpha: 0.05),
-                blurRadius: 12,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Expanded(
-                  child: Stack(
-                    fit: StackFit.expand,
-                    children: [
-                      CoverPreview(
-                        title: ebook.title,
-                        subtitle: ebook.fileTypeLabel,
-                        coverUrl: ebook.coverUrl,
-                        compact: true,
-                        showFormatBadge: false,
-                      ),
-                      Positioned(
-                        left: 0,
-                        right: 0,
-                        bottom: 0,
-                        child: ClipRRect(
-                          child: LinearProgressIndicator(
-                            value: item.progress.clamp(0.0, 1.0),
-                            minHeight: 3,
-                            backgroundColor: Colors.black26,
-                            color: shelfStyle ? LibraryShelfTheme.navActive : AppColors.accent,
-                          ),
-                        ),
-                      ),
-                    ],
+        width: 152,
+        height: ShelfMetrics.continueReadingStripHeight,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            SizedBox(
+              height: bookHeight + restInset,
+              child: Stack(
+                clipBehavior: Clip.none,
+                alignment: Alignment.bottomCenter,
+                children: [
+                  const Positioned(
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    child: WoodenShelfPlank(showBrackets: false),
                   ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(10, 8, 10, 10),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  Positioned(
+                    left: 0,
+                    right: 0,
+                    bottom: restInset,
+                    child: Align(
+                      child: RealisticBookVisual(
+                        ebook: ebook,
+                        width: bookWidth,
+                        height: bookHeight,
+                        progress: item.progress,
+                        onShelf: true,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 6),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Flexible(
+                    child: ShelfWallLabel(
+                      ebook: ebook,
+                      progressLabel: '${item.progressPercent}% · $_timeLabel',
+                      showTitle: true,
+                      maxDescriptionLines: 1,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
-                        ebook.title,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: theme.textTheme.titleSmall?.copyWith(
-                          color: shelfStyle ? LibraryShelfTheme.headerText : null,
-                        ),
+                        'Tap to continue',
+                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                              color: LibraryShelfTheme.navActive,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 10,
+                            ),
                       ),
-                      const SizedBox(height: 3),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              '${item.progressPercent}% · $_timeLabel',
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: theme.textTheme.labelSmall?.copyWith(
-                                color: shelfStyle ? LibraryShelfTheme.headerMuted : AppColors.textMuted,
-                              ),
-                            ),
-                          ),
-                          GestureDetector(
-                            onTap: onOpenDetails,
-                            child: Icon(
-                              Icons.info_outline_rounded,
-                              size: 15,
-                              color: shelfStyle ? LibraryShelfTheme.headerMuted : AppColors.textMuted,
-                            ),
-                          ),
-                        ],
+                      const SizedBox(width: 6),
+                      GestureDetector(
+                        onTap: onOpenDetails,
+                        child: Icon(
+                          Icons.info_outline_rounded,
+                          size: 14,
+                          color: LibraryShelfTheme.headerMuted,
+                        ),
                       ),
                     ],
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
+          ],
         ),
       ),
     );

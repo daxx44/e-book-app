@@ -186,9 +186,8 @@ class LibraryScreen extends GetView<LibraryController> {
 
   static int _booksPerRow(BuildContext context) {
     final width = MediaQuery.sizeOf(context).width;
-    if (width >= 700) return 4;
-    if (width >= 480) return 3;
-    return 2;
+    if (width >= 800) return 4;
+    return 3;
   }
 
   static List<Ebook> _booksOnShelf(List<Ebook> ebooks, int shelfIndex, int booksPerRow) {
