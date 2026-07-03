@@ -4,6 +4,7 @@ import 'package:epub_view/epub_view.dart' as epub;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:frontend/core/network/api_exception.dart';
+import 'package:frontend/core/services/recently_read_service.dart';
 import 'package:frontend/core/utils/app_feedback.dart';
 import 'package:frontend/models/ebook.dart';
 import 'package:frontend/models/reader_search_result.dart';
@@ -19,10 +20,14 @@ import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
 enum ReaderStatus { loading, ready, error }
 
 class ReaderController extends GetxController {
-  ReaderController({EbookRepository? repository})
-      : _repository = repository ?? EbookRepository();
+  ReaderController({
+    EbookRepository? repository,
+    RecentlyReadService? recentlyReadService,
+  })  : _repository = repository ?? EbookRepository(),
+        _recentlyReadService = recentlyReadService ?? RecentlyReadService();
 
   final EbookRepository _repository;
+  final RecentlyReadService _recentlyReadService;
   final pdfViewerController = PdfViewerController();
 
   late final Ebook ebook;
@@ -89,6 +94,7 @@ class ReaderController extends GetxController {
     savedPage.value = page;
     final prefs = await SharedPreferences.getInstance();
     await prefs.setInt(_pageKey, page);
+    await _recordRecentlyRead();
   }
 
   void onEpubPositionChanged(dynamic value) {
@@ -101,6 +107,18 @@ class ReaderController extends GetxController {
 
     final positionIndex = value.chapterNumber;
     savedPage.value = positionIndex;
+    _recordRecentlyRead();
+  }
+
+  Future<void> _recordRecentlyRead() async {
+    if (status.value != ReaderStatus.ready) return;
+
+    await _recentlyReadService.record(
+      ebookId: ebook.id,
+      progress: progress,
+      currentPage: savedPage.value,
+      totalPages: totalPages.value > 0 ? totalPages.value : null,
+    );
   }
 
   Future<void> saveEpubLocation(String cfi) async {
@@ -351,6 +369,7 @@ class ReaderController extends GetxController {
       }
 
       status.value = ReaderStatus.ready;
+      await _recordRecentlyRead();
     } on ApiException catch (error) {
       errorMessage.value = error.message;
       status.value = ReaderStatus.error;
@@ -370,6 +389,7 @@ class ReaderController extends GetxController {
 
   @override
   void onClose() {
+    _recordRecentlyRead();
     _pdfSearchResult?.removeListener(_onPdfSearchUpdated);
     _pdfSearchResult?.clear();
     epubController?.currentValueListenable.removeListener(_epubListener);

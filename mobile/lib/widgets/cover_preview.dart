@@ -10,6 +10,7 @@ class CoverPreview extends StatelessWidget {
     this.coverUrl,
     this.heroTag,
     this.compact = false,
+    this.showFormatBadge = true,
   });
 
   final String title;
@@ -17,6 +18,7 @@ class CoverPreview extends StatelessWidget {
   final String? coverUrl;
   final String? heroTag;
   final bool compact;
+  final bool showFormatBadge;
 
   static List<Color> gradientForTitle(String title) {
     final hash = title.codeUnits.fold<int>(0, (value, unit) => value + unit);
@@ -54,20 +56,22 @@ class CoverPreview extends StatelessWidget {
         Positioned(
           right: 8,
           top: 8,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(
-              color: Colors.black.withValues(alpha: 0.55),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Text(
-              subtitle ?? 'PDF',
-              style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w600,
+          child: showFormatBadge
+              ? Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.55),
+                    borderRadius: BorderRadius.circular(8),
                   ),
-            ),
-          ),
+                  child: Text(
+                    subtitle ?? 'PDF',
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w600,
+                        ),
+                  ),
+                )
+              : const SizedBox.shrink(),
         ),
       ],
     );
@@ -111,20 +115,22 @@ class CoverPreview extends StatelessWidget {
           Positioned(
             right: 12,
             top: 12,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.2),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Text(
-                subtitle ?? 'PDF',
-                style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      color: Colors.white.withValues(alpha: 0.95),
-                      fontWeight: FontWeight.w600,
+            child: showFormatBadge
+                ? Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(8),
                     ),
-              ),
-            ),
+                    child: Text(
+                      subtitle ?? 'PDF',
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                            color: Colors.white.withValues(alpha: 0.95),
+                            fontWeight: FontWeight.w600,
+                          ),
+                    ),
+                  )
+                : const SizedBox.shrink(),
           ),
           Padding(
             padding: EdgeInsets.all(compact ? 16 : 20),

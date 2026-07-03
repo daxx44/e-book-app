@@ -21,6 +21,7 @@ void main() {
       MaterialApp(
         home: Scaffold(
           body: SizedBox(
+            width: 180,
             height: 320,
             child: BookCard(
               ebook: ebook,
@@ -43,6 +44,7 @@ void main() {
       MaterialApp(
         home: Scaffold(
           body: SizedBox(
+            width: 180,
             height: 320,
             child: BookCard(
               ebook: ebook,

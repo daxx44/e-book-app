@@ -11,6 +11,7 @@ import 'package:frontend/widgets/empty_state_widget.dart';
 import 'package:frontend/widgets/error_state_widget.dart';
 import 'package:frontend/widgets/library_header.dart';
 import 'package:frontend/widgets/loading_widget.dart';
+import 'package:frontend/widgets/recently_read_section.dart';
 import 'package:frontend/widgets/sort_menu.dart';
 import 'package:get/get.dart';
 
@@ -29,28 +30,33 @@ class LibraryScreen extends GetView<LibraryController> {
     return Scaffold(
       backgroundColor: AppColors.background,
       drawer: const AppDrawer(),
-      floatingActionButton: _AnimatedFab(onPressed: controller.openUpload),
-      body: SafeArea(
-        child: Builder(
-          builder: (scaffoldContext) {
-            return Obx(() {
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  _libraryHeader(scaffoldContext, bookCount: _headerBookCount()),
-                  Expanded(
-                    child: AnimatedSwitcher(
-                      duration: const Duration(milliseconds: 350),
-                      switchInCurve: Curves.easeOutCubic,
-                      switchOutCurve: Curves.easeInCubic,
-                      child: _buildBody(scaffoldContext),
-                    ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: controller.openUpload,
+        elevation: 3,
+        highlightElevation: 6,
+        icon: const Icon(Icons.add_rounded),
+        label: const Text('Add book'),
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+      body: Builder(
+        builder: (scaffoldContext) {
+          return Obx(() {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _libraryHeader(scaffoldContext, bookCount: _headerBookCount()),
+                Expanded(
+                  child: AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 350),
+                    switchInCurve: Curves.easeOutCubic,
+                    switchOutCurve: Curves.easeInCubic,
+                    child: _buildBody(scaffoldContext),
                   ),
-                ],
-              );
-            });
-          },
-        ),
+                ),
+              ],
+            );
+          });
+        },
       ),
     );
   }
@@ -87,24 +93,62 @@ class LibraryScreen extends GetView<LibraryController> {
         );
       case LibraryStatus.success:
         return RefreshIndicator(
-          key: ValueKey('success-${controller.ebooks.length}'),
+          key: ValueKey('success-${controller.ebooks.length}-${controller.recentlyRead.length}'),
           color: AppColors.accent,
           backgroundColor: AppColors.surface,
           strokeWidth: 2.5,
           displacement: 56,
           onRefresh: controller.loadEbooks,
-          child: ListView.builder(
-            physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
-            padding: const EdgeInsets.fromLTRB(20, 0, 20, 100),
-            itemCount: _shelfCount(controller.ebooks.length),
-            itemBuilder: (context, shelfIndex) => _BookshelfRow(
-              shelfBooks: _booksOnShelf(controller.ebooks, shelfIndex),
-              onOpenDetails: (ebook) => _openDetails(context, ebook),
-              onRead: controller.openReader,
-              onDownload: controller.downloadEbook,
-              onDelete: (ebook) => _confirmDelete(context, ebook),
-            ),
-          ),
+          child: Obx(() {
+            final ebooks = controller.ebooks;
+            final hasRecent = controller.recentlyRead.isNotEmpty;
+            final grid = _gridLayoutFor(context);
+
+            return CustomScrollView(
+              physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+              slivers: [
+                SliverToBoxAdapter(
+                  child: RecentlyReadSection(
+                    items: controller.recentlyRead,
+                    ebooksById: controller.ebooksById,
+                    onOpen: (ebook) => _openDetails(context, ebook),
+                    onContinue: controller.openReader,
+                  ),
+                ),
+                SliverToBoxAdapter(
+                  child: _LibrarySectionHeader(
+                    title: hasRecent ? 'All Books' : 'Your Books',
+                    count: ebooks.length,
+                  ),
+                ),
+                SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(AppSpacing.md, 0, AppSpacing.md, 108),
+                  sliver: SliverGrid(
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: grid.crossAxisCount,
+                      mainAxisSpacing: grid.mainAxisSpacing,
+                      crossAxisSpacing: grid.crossAxisSpacing,
+                      childAspectRatio: grid.childAspectRatio,
+                    ),
+                    delegate: SliverChildBuilderDelegate(
+                      (context, index) {
+                        final ebook = ebooks[index];
+                        return BookCard(
+                          key: ValueKey('library-book-${ebook.id}'),
+                          ebook: ebook,
+                          onTap: () => _openDetails(context, ebook),
+                          onRead: () => controller.openReader(ebook),
+                          onDownload: () => controller.downloadEbook(ebook),
+                          onDelete: () => _confirmDelete(context, ebook),
+                        );
+                      },
+                      childCount: ebooks.length,
+                    ),
+                  ),
+                ),
+              ],
+            );
+          }),
         );
     }
   }
@@ -124,111 +168,69 @@ class LibraryScreen extends GetView<LibraryController> {
     if (confirmed == true) await controller.deleteEbook(ebook);
   }
 
-  static List<Ebook> _booksOnShelf(List<Ebook> ebooks, int shelfIndex) {
-    final start = shelfIndex * 2;
-    return ebooks.skip(start).take(2).toList();
-  }
+  static _LibraryGridLayout _gridLayoutFor(BuildContext context) {
+    final width = MediaQuery.sizeOf(context).width;
+    final isLandscape = MediaQuery.orientationOf(context) == Orientation.landscape;
 
-  static int _shelfCount(int count) => count == 0 ? 0 : (count / 2).ceil();
-}
-
-class _AnimatedFab extends StatefulWidget {
-  const _AnimatedFab({required this.onPressed});
-
-  final VoidCallback onPressed;
-
-  @override
-  State<_AnimatedFab> createState() => _AnimatedFabState();
-}
-
-class _AnimatedFabState extends State<_AnimatedFab> with SingleTickerProviderStateMixin {
-  late final AnimationController _pulse;
-
-  @override
-  void initState() {
-    super.initState();
-    _pulse = AnimationController(vsync: this, duration: const Duration(milliseconds: 1800))
-      ..repeat(reverse: true);
-  }
-
-  @override
-  void dispose() {
-    _pulse.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return ScaleTransition(
-      scale: Tween<double>(begin: 1, end: 1.04).animate(CurvedAnimation(parent: _pulse, curve: Curves.easeInOut)),
-      child: FloatingActionButton.extended(
-        onPressed: widget.onPressed,
-        elevation: 8,
-        highlightElevation: 12,
-        icon: const Icon(Icons.add_rounded),
-        label: const Text('Add Book'),
-      ),
-    );
+    if (width >= 900) {
+      return const _LibraryGridLayout(crossAxisCount: 4, childAspectRatio: 0.52);
+    }
+    if (width >= 600 || isLandscape) {
+      return const _LibraryGridLayout(crossAxisCount: 3, childAspectRatio: 0.52);
+    }
+    return const _LibraryGridLayout(crossAxisCount: 2, childAspectRatio: 0.50);
   }
 }
 
-class _BookshelfRow extends StatelessWidget {
-  const _BookshelfRow({
-    required this.shelfBooks,
-    required this.onOpenDetails,
-    required this.onRead,
-    required this.onDownload,
-    required this.onDelete,
+class _LibraryGridLayout {
+  const _LibraryGridLayout({
+    required this.crossAxisCount,
+    required this.childAspectRatio,
   });
 
-  final List<Ebook> shelfBooks;
-  final void Function(Ebook) onOpenDetails;
-  final void Function(Ebook) onRead;
-  final Future<void> Function(Ebook) onDownload;
-  final Future<void> Function(Ebook) onDelete;
+  final int crossAxisCount;
+  final double childAspectRatio;
+  final double mainAxisSpacing = 20;
+  final double crossAxisSpacing = 14;
+}
+
+class _LibrarySectionHeader extends StatelessWidget {
+  const _LibrarySectionHeader({
+    required this.title,
+    required this.count,
+  });
+
+  final String title;
+  final int count;
 
   @override
   Widget build(BuildContext context) {
-    final width = MediaQuery.sizeOf(context).width;
-    final isWide = width > 600;
-    final isLandscape = MediaQuery.orientationOf(context) == Orientation.landscape;
-    final booksPerRow = isWide || isLandscape ? 3 : 2;
-    final bookHeight = isWide ? 300.0 : (isLandscape ? 240.0 : 268.0);
+    final theme = Theme.of(context);
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: AppSpacing.lg),
-      child: Column(
+      padding: const EdgeInsets.fromLTRB(AppSpacing.md, AppSpacing.md, AppSpacing.md, AppSpacing.sm + 4),
+      child: Row(
         children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              for (final ebook in shelfBooks)
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 6),
-                    child: SizedBox(
-                      height: bookHeight,
-                      child: TweenAnimationBuilder<double>(
-                        key: ValueKey('book-${ebook.id}'),
-                        tween: Tween(begin: 0.9, end: 1),
-                        duration: const Duration(milliseconds: 450),
-                        curve: Curves.easeOutCubic,
-                        builder: (context, scale, child) => Transform.scale(scale: scale, child: child),
-                        child: BookCard(
-                          ebook: ebook,
-                          onTap: () => onOpenDetails(ebook),
-                          onRead: () => onRead(ebook),
-                          onDownload: () => onDownload(ebook),
-                          onDelete: () => onDelete(ebook),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              for (var i = shelfBooks.length; i < booksPerRow; i++) const Expanded(child: SizedBox()),
-            ],
+          Text(
+            title,
+            style: theme.textTheme.titleMedium,
           ),
-          const ShelfDivider(),
+          const SizedBox(width: AppSpacing.sm),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+            decoration: BoxDecoration(
+              color: AppColors.surfaceSoft,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: AppColors.secondary.withValues(alpha: 0.4)),
+            ),
+            child: Text(
+              '$count',
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: AppColors.textSecondary,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
         ],
       ),
     );

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:frontend/core/theme/app_colors.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:frontend/core/theme/app_typography.dart';
 
 /// Reading-focused palette and typography matching the premium reader mockup.
 class ReaderTheme {
@@ -15,41 +14,31 @@ class ReaderTheme {
   static const Color progressFill = Color(0xFF5D4037);
   static const Color iconColor = Color(0xFF2C2420);
 
-  static TextStyle get titleSerif => GoogleFonts.merriweather(
-        fontSize: 26,
-        fontWeight: FontWeight.w700,
-        color: AppColors.textPrimary,
-        height: 1.25,
-      );
+  static TextStyle get titleSerif => AppTypography.headline(fontSize: 26);
 
-  static TextStyle get chapterLabelStyle => GoogleFonts.inter(
+  static TextStyle get chapterLabelStyle => AppTypography.label(
         fontSize: 11,
         fontWeight: FontWeight.w600,
         color: chapterLabel,
         letterSpacing: 1.4,
       );
 
-  static TextStyle bodySerif(double fontSize) => GoogleFonts.merriweather(
+  static TextStyle bodySerif(double fontSize) => AppTypography.body(
         fontSize: fontSize,
-        fontWeight: FontWeight.w400,
         color: bodyText,
         height: 1.75,
       );
 
-  static TextStyle get footerPageStyle => GoogleFonts.merriweather(
-        fontSize: 22,
-        fontWeight: FontWeight.w700,
-        color: AppColors.textPrimary,
-      );
+  static TextStyle get footerPageStyle => AppTypography.headline(fontSize: 22);
 
-  static TextStyle get footerLabelStyle => GoogleFonts.inter(
+  static TextStyle get footerLabelStyle => AppTypography.label(
         fontSize: 10,
         fontWeight: FontWeight.w600,
         color: chapterLabel,
         letterSpacing: 1.2,
       );
 
-  static TextStyle get footerPercentStyle => GoogleFonts.inter(
+  static TextStyle get footerPercentStyle => AppTypography.label(
         fontSize: 12,
         fontWeight: FontWeight.w500,
         color: chapterLabel,

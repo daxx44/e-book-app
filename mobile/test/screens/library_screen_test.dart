@@ -4,6 +4,7 @@ import 'package:frontend/repositories/ebook_repository.dart';
 import 'package:frontend/screens/library_screen.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class FakeEbookRepository extends EbookRepository {
   FakeEbookRepository(this.ebooks);
@@ -16,6 +17,7 @@ class FakeEbookRepository extends EbookRepository {
 
 void main() {
   setUp(() {
+    SharedPreferences.setMockInitialValues({});
     Get.testMode = true;
     Get.reset();
   });

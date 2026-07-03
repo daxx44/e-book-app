@@ -1,31 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:frontend/core/constants/app_spacing.dart';
 import 'package:frontend/core/theme/app_colors.dart';
 
+/// @deprecated Bookshelf divider removed from library grid layout.
 class ShelfDivider extends StatelessWidget {
   const ShelfDivider({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 16,
-      margin: const EdgeInsets.only(top: 12),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(6),
-        gradient: const LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [
-            AppColors.shelfWood,
-            AppColors.shelfShadow,
-          ],
-        ),
-        boxShadow: const [
-          BoxShadow(color: Color(0x33000000), blurRadius: 8, offset: Offset(0, 4)),
-        ],
-      ),
-    );
-  }
+  Widget build(BuildContext context) => const SizedBox.shrink();
 }
 
 class LibraryHeader extends StatelessWidget {
@@ -51,53 +34,153 @@ class LibraryHeader extends StatelessWidget {
     return 'Good evening';
   }
 
+  String get _collectionLabel {
+    if (bookCount == 0) return 'Your collection is empty';
+    if (bookCount == 1) return '1 book in your collection';
+    return '$bookCount books in your collection';
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 8, 12, 8),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              if (onMenu != null)
-                IconButton(
-                  tooltip: 'Menu',
-                  onPressed: onMenu,
-                  icon: const Icon(Icons.menu_rounded),
-                  style: IconButton.styleFrom(
-                    backgroundColor: AppColors.surface,
-                    foregroundColor: AppColors.textPrimary,
-                  ),
-                ),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(_greeting, style: Theme.of(context).textTheme.bodyMedium),
-                    const SizedBox(height: 4),
-                    Text('My Library', style: Theme.of(context).textTheme.displayMedium),
-                    const SizedBox(height: 6),
-                    Text(
-                      bookCount == 0 ? 'Start your collection' : '$bookCount ${bookCount == 1 ? 'book' : 'books'}',
-                      style: Theme.of(context).textTheme.bodySmall,
-                    ),
-                  ],
-                ),
-              ),
-              IconButton(
-                tooltip: 'Search',
-                onPressed: onSearch,
-                icon: const Icon(Icons.search_rounded),
-                style: IconButton.styleFrom(
-                  backgroundColor: AppColors.surface,
-                  foregroundColor: AppColors.textPrimary,
-                ),
-              ),
-              sortMenu,
-            ],
+    final theme = Theme.of(context);
+
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle.dark.copyWith(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.dark,
+        statusBarBrightness: Brightness.light,
+      ),
+      child: DecoratedBox(
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        border: Border(
+          bottom: BorderSide(color: AppColors.secondary.withValues(alpha: 0.45)),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.textPrimary.withValues(alpha: 0.04),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
           ),
         ],
+      ),
+      child: Padding(
+        padding: EdgeInsets.fromLTRB(
+          AppSpacing.md,
+          MediaQuery.paddingOf(context).top + AppSpacing.sm,
+          AppSpacing.md,
+          AppSpacing.md,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                if (onMenu != null) ...[
+                  _HeaderIconButton(
+                    icon: Icons.menu_rounded,
+                    tooltip: 'Menu',
+                    onPressed: onMenu!,
+                  ),
+                  const SizedBox(width: AppSpacing.sm + 4),
+                ],
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        _greeting,
+                        style: theme.textTheme.labelMedium?.copyWith(
+                          color: AppColors.textMuted,
+                          letterSpacing: 0.2,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        'My Library',
+                        style: theme.textTheme.headlineSmall,
+                      ),
+                    ],
+                  ),
+                ),
+                sortMenu,
+              ],
+            ),
+            const SizedBox(height: AppSpacing.sm + 4),
+            Text(
+              _collectionLabel,
+              style: theme.textTheme.bodySmall?.copyWith(color: AppColors.textSecondary),
+            ),
+            const SizedBox(height: AppSpacing.md),
+            Material(
+              color: AppColors.background,
+              borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+              child: InkWell(
+                onTap: onSearch,
+                borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+                child: Container(
+                  height: 48,
+                  padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+                    border: Border.all(color: AppColors.secondary.withValues(alpha: 0.55)),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.search_rounded, size: 22, color: AppColors.textMuted),
+                      const SizedBox(width: AppSpacing.sm + 4),
+                      Expanded(
+                        child: Text(
+                          'Search title, author, or format',
+                          style: theme.textTheme.bodyMedium?.copyWith(color: AppColors.textMuted),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+      ),
+    );
+  }
+}
+
+class _HeaderIconButton extends StatelessWidget {
+  const _HeaderIconButton({
+    required this.icon,
+    required this.onPressed,
+    this.tooltip,
+  });
+
+  final IconData icon;
+  final VoidCallback onPressed;
+  final String? tooltip;
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: tooltip ?? '',
+      child: Material(
+        color: AppColors.background,
+        borderRadius: BorderRadius.circular(12),
+        child: InkWell(
+          onTap: onPressed,
+          borderRadius: BorderRadius.circular(12),
+          child: Container(
+            width: 44,
+            height: 44,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: AppColors.secondary.withValues(alpha: 0.55)),
+            ),
+            child: Icon(icon, size: 22, color: AppColors.textPrimary),
+          ),
+        ),
       ),
     );
   }
@@ -142,9 +225,10 @@ class _PremiumSearchFieldState extends State<PremiumSearchField> {
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
+        border: Border.all(color: AppColors.secondary.withValues(alpha: 0.55)),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primary.withValues(alpha: 0.08),
+            color: AppColors.primary.withValues(alpha: 0.06),
             blurRadius: 20,
             offset: const Offset(0, 8),
           ),

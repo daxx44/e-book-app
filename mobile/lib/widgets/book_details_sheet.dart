@@ -62,7 +62,6 @@ Future<void> showBookDetailsSheet(
                         title: ebook.title,
                         subtitle: ebook.fileTypeLabel,
                         coverUrl: ebook.coverUrl,
-                        heroTag: 'book-cover-${ebook.id}',
                       ),
                     ),
                   ),
