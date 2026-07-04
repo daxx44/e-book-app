@@ -337,7 +337,7 @@ Demo media is **included in this repo** under `docs/screenshots/` (no external l
 
 Preview (bookshelf):
 
-![Bookshelf library](docs/screenshots/Screenshot_20260704-162832.png)
+![Bookshelf library](docs/screenshots/Screenshot_20260704-165410.png)
 
 Full index: [docs/screenshots/README.md](docs/screenshots/README.md)
 
