@@ -6,7 +6,9 @@ import 'package:frontend/core/constants/app_constants.dart';
 import 'package:frontend/core/network/api_exception.dart';
 import 'package:frontend/core/utils/app_feedback.dart';
 import 'package:frontend/core/utils/app_haptics.dart';
+import 'package:frontend/controllers/library_controller.dart';
 import 'package:frontend/repositories/ebook_repository.dart';
+import 'package:frontend/routes/app_pages.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -27,7 +29,32 @@ class UploadController extends GetxController {
   final RxString errorMessage = ''.obs;
   final RxBool showSuccess = false.obs;
 
+  bool _isLeaving = false;
   String? _pickedFilePath;
+
+  Future<void> finishAndReturnHome() async {
+    if (_isLeaving) return;
+    _isLeaving = true;
+
+    final title = titleController.text.trim();
+
+    try {
+      if (Get.key.currentState?.canPop() ?? false) {
+        Get.back(closeOverlays: true, result: true);
+      } else {
+        await Get.offAllNamed(AppRoutes.library);
+      }
+
+      AppFeedback.success('Added to library', message: title);
+
+      if (Get.isRegistered<LibraryController>()) {
+        Get.find<LibraryController>().loadEbooks();
+      }
+    } catch (_) {
+      _isLeaving = false;
+      await Get.offAllNamed(AppRoutes.library);
+    }
+  }
 
   Future<void> pickFile() async {
     errorMessage.value = '';

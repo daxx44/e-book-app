@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:frontend/core/theme/library_shelf_theme.dart';
 import 'package:frontend/controllers/library_controller.dart';
+import 'package:frontend/core/theme/library_shelf_theme.dart';
 import 'package:frontend/core/utils/app_feedback.dart';
 import 'package:frontend/models/ebook.dart';
-import 'package:frontend/widgets/app_drawer.dart';
 import 'package:frontend/widgets/book_details_sheet.dart';
 import 'package:frontend/widgets/delete_confirmation_dialog.dart';
 import 'package:frontend/widgets/empty_state_widget.dart';
@@ -16,6 +15,8 @@ import 'package:frontend/widgets/loading_widget.dart';
 import 'package:frontend/widgets/recently_read_section.dart';
 import 'package:frontend/widgets/sort_menu.dart';
 import 'package:get/get.dart';
+
+import '../widgets/app_drawer.dart';
 
 class LibraryScreen extends GetView<LibraryController> {
   const LibraryScreen({super.key});
@@ -90,7 +91,10 @@ class LibraryScreen extends GetView<LibraryController> {
   void _continueReading() {
     final recent = controller.recentlyRead;
     if (recent.isEmpty) {
-      AppFeedback.info('Reader', message: 'Open a book from your shelf to start reading.');
+      AppFeedback.info(
+        'Reader',
+        message: 'Open a book from your shelf to start reading.',
+      );
       return;
     }
     final ebook = controller.ebooksById[recent.first.ebookId];
@@ -100,7 +104,10 @@ class LibraryScreen extends GetView<LibraryController> {
   }
 
   void _showDownloadsHint() {
-    AppFeedback.info('Downloads', message: 'Use the book menu on any title to save it to your device.');
+    AppFeedback.info(
+      'Downloads',
+      message: 'Use the book menu on any title to save it to your device.',
+    );
   }
 
   Widget _buildBody(BuildContext context) {
@@ -117,13 +124,16 @@ class LibraryScreen extends GetView<LibraryController> {
         return EmptyStateWidget(
           key: const ValueKey('empty'),
           title: 'No books yet',
-          message: 'Upload your first ebook to start building your personal library.',
+          message:
+              'Upload your first ebook to start building your personal library.',
           actionLabel: 'Upload ebook',
           onAction: controller.openUpload,
         );
       case LibraryStatus.success:
         return RefreshIndicator(
-          key: ValueKey('success-${controller.ebooks.length}-${controller.recentlyRead.length}'),
+          key: ValueKey(
+            'success-${controller.ebooks.length}-${controller.recentlyRead.length}',
+          ),
           color: LibraryShelfTheme.navActive,
           backgroundColor: LibraryShelfTheme.shelfMid,
           strokeWidth: 2.5,
@@ -132,10 +142,14 @@ class LibraryScreen extends GetView<LibraryController> {
           child: Obx(() {
             final ebooks = controller.ebooks;
             final booksPerRow = _booksPerRow(context);
-            final shelfCount = ebooks.isEmpty ? 0 : (ebooks.length / booksPerRow).ceil();
+            final shelfCount = ebooks.isEmpty
+                ? 0
+                : (ebooks.length / booksPerRow).ceil();
 
             return CustomScrollView(
-              physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+              physics: const AlwaysScrollableScrollPhysics(
+                parent: BouncingScrollPhysics(),
+              ),
               slivers: [
                 SliverToBoxAdapter(
                   child: RecentlyReadSection(
@@ -190,7 +204,11 @@ class LibraryScreen extends GetView<LibraryController> {
     return 3;
   }
 
-  static List<Ebook> _booksOnShelf(List<Ebook> ebooks, int shelfIndex, int booksPerRow) {
+  static List<Ebook> _booksOnShelf(
+    List<Ebook> ebooks,
+    int shelfIndex,
+    int booksPerRow,
+  ) {
     final start = shelfIndex * booksPerRow;
     return ebooks.skip(start).take(booksPerRow).toList();
   }
