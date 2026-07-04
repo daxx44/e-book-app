@@ -335,7 +335,7 @@ Demo media is **included in this repo** under `docs/screenshots/` (no external l
 | Delete confirmation | [Screenshot_20260704-163552.png](docs/screenshots/Screenshot_20260704-163552.png) |
 | Downloads / About | [Screenshot_20260704-165410.png](docs/screenshots/Screenshot_20260704-165410.png) |
 
-Preview (bookshelf):
+Preview (bookshelf):-
 
 ![Bookshelf library](docs/screenshots/Screenshot_20260704-165410.png)
 
