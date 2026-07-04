@@ -31,27 +31,42 @@ class LibraryController extends GetxController {
   final RxBool isDownloading = false.obs;
   final RxString sortBy = 'recent'.obs;
 
+  bool _hasLoadedOnce = false;
+  bool get hasLoadedOnce => _hasLoadedOnce;
+
   @override
   void onInit() {
     super.onInit();
     loadEbooks();
   }
 
-  Future<void> loadEbooks() async {
-    status.value = LibraryStatus.loading;
+  /// Refreshes the library in the background without showing the initial shimmer.
+  Future<void> refreshEbooks() => loadEbooks(background: true);
+
+  Future<void> loadEbooks({bool background = false}) async {
+    final showInitialLoader = !background && !_hasLoadedOnce;
+
+    if (showInitialLoader) {
+      status.value = LibraryStatus.loading;
+    }
     errorMessage.value = '';
 
     try {
       final results = await _repository.fetchEbooks(sort: sortBy.value);
       ebooks.assignAll(results);
       await _loadRecentlyRead();
+      _hasLoadedOnce = true;
       status.value = results.isEmpty ? LibraryStatus.empty : LibraryStatus.success;
     } on ApiException catch (error) {
+      if (background && ebooks.isNotEmpty) return;
       errorMessage.value = error.message;
       status.value = LibraryStatus.error;
+      _hasLoadedOnce = true;
     } catch (_) {
+      if (background && ebooks.isNotEmpty) return;
       errorMessage.value = 'Failed to load library.';
       status.value = LibraryStatus.error;
+      _hasLoadedOnce = true;
     }
   }
 
@@ -98,7 +113,7 @@ class LibraryController extends GetxController {
   void changeSort(String value) {
     sortBy.value = value;
     AppHaptics.selection();
-    loadEbooks();
+    loadEbooks(background: hasLoadedOnce);
   }
 
   void openReader(Ebook ebook) {
@@ -116,11 +131,11 @@ class LibraryController extends GetxController {
 
   void openUpload() {
     AppHaptics.light();
-    Get.toNamed(AppRoutes.upload)?.then((_) => loadEbooks());
+    Get.toNamed(AppRoutes.upload)?.then((_) => refreshEbooks());
   }
 
   void openSearch() {
     AppHaptics.light();
-    Get.toNamed(AppRoutes.search)?.then((_) => loadEbooks());
+    Get.toNamed(AppRoutes.search)?.then((_) => refreshEbooks());
   }
 }

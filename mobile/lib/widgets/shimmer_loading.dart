@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/core/theme/app_colors.dart';
+import 'package:frontend/core/theme/library_shelf_theme.dart';
+import 'package:frontend/widgets/library/wooden_shelf_plank.dart';
 import 'package:shimmer/shimmer.dart';
 
 class ShimmerBox extends StatelessWidget {
@@ -8,22 +10,29 @@ class ShimmerBox extends StatelessWidget {
     required this.width,
     required this.height,
     this.borderRadius = 16,
+    this.baseColor,
+    this.highlightColor,
   });
 
   final double width;
   final double height;
   final double borderRadius;
+  final Color? baseColor;
+  final Color? highlightColor;
 
   @override
   Widget build(BuildContext context) {
+    final base = baseColor ?? AppColors.shimmerBase;
+    final highlight = highlightColor ?? AppColors.shimmerHighlight;
+
     return Shimmer.fromColors(
-      baseColor: AppColors.shimmerBase,
-      highlightColor: AppColors.shimmerHighlight,
+      baseColor: base,
+      highlightColor: highlight,
       child: Container(
         width: width,
         height: height,
         decoration: BoxDecoration(
-          color: AppColors.shimmerBase,
+          color: base,
           borderRadius: BorderRadius.circular(borderRadius),
         ),
       ),
@@ -31,28 +40,189 @@ class ShimmerBox extends StatelessWidget {
   }
 }
 
+/// Skeleton loader matching the wooden bookshelf library layout.
 class LibraryShimmer extends StatelessWidget {
   const LibraryShimmer({super.key});
 
+  static const _base = Color(0xFF241612);
+  static const _highlight = Color(0xFF3D2B22);
+
   @override
   Widget build(BuildContext context) {
-    return ListView.builder(
-      padding: const EdgeInsets.fromLTRB(20, 8, 20, 100),
-      itemCount: 3,
-      itemBuilder: (context, index) {
-        return Padding(
-          padding: const EdgeInsets.only(bottom: 28),
-          child: Column(
-            children: [
-              Row(
+    final booksPerRow = MediaQuery.sizeOf(context).width >= 800 ? 4 : 3;
+    final bookHeight = ShelfMetrics.bookHeightFor(context, booksPerRow);
+
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(0, 8, 0, 100),
+      children: [
+        _ContinueReadingStrip(),
+        const SizedBox(height: 8),
+        for (var row = 0; row < 2; row++)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: _ShelfRowShimmer(
+              booksPerRow: booksPerRow,
+              bookHeight: bookHeight,
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+class _ContinueReadingStrip extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(14, 8, 14, 0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const ShimmerBox(
+            width: 140,
+            height: 18,
+            borderRadius: 6,
+            baseColor: LibraryShimmer._base,
+            highlightColor: LibraryShimmer._highlight,
+          ),
+          const SizedBox(height: 14),
+          SizedBox(
+            height: ShelfMetrics.continueReadingStripHeight,
+            child: Row(
+              children: [
+                Expanded(
+                  child: _BookColumnShimmer(
+                    bookHeight: ShelfMetrics.resolvedBookHeight(ShelfMetrics.continueBookWidth),
+                  ),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: _BookColumnShimmer(
+                    bookHeight: ShelfMetrics.resolvedBookHeight(ShelfMetrics.continueBookWidth),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ShelfRowShimmer extends StatelessWidget {
+  const _ShelfRowShimmer({
+    required this.booksPerRow,
+    required this.bookHeight,
+  });
+
+  final int booksPerRow;
+  final double bookHeight;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Stack(
+          clipBehavior: Clip.none,
+          alignment: Alignment.bottomCenter,
+          children: [
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: ShelfMetrics.rowHorizontalPadding),
+              child: _ShelfPlankShimmer(),
+            ),
+            Padding(
+              padding: EdgeInsets.fromLTRB(
+                ShelfMetrics.rowHorizontalPadding,
+                0,
+                ShelfMetrics.rowHorizontalPadding,
+                ShelfMetrics.bookRestInset,
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  Expanded(child: _BookShimmerCard()),
-                  const SizedBox(width: 16),
-                  Expanded(child: _BookShimmerCard()),
+                  for (var i = 0; i < booksPerRow; i++)
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: ShelfMetrics.columnGap / 2,
+                        ),
+                        child: _BookColumnShimmer(bookHeight: bookHeight),
+                      ),
+                    ),
                 ],
               ),
-              const SizedBox(height: 12),
-              const ShimmerBox(width: double.infinity, height: 12, borderRadius: 6),
+            ),
+          ],
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(
+            ShelfMetrics.rowHorizontalPadding,
+            4,
+            ShelfMetrics.rowHorizontalPadding,
+            0,
+          ),
+          child: Row(
+            children: [
+              for (var i = 0; i < booksPerRow; i++)
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: ShelfMetrics.columnGap / 2,
+                    ),
+                    child: const _WallLabelShimmer(),
+                  ),
+                ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 4),
+      ],
+    );
+  }
+}
+
+class _BookColumnShimmer extends StatelessWidget {
+  const _BookColumnShimmer({required this.bookHeight});
+
+  final double bookHeight;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final coverW = ShelfMetrics.bookWidthForColumn(constraints.maxWidth, bookHeight);
+        final coverH = ShelfMetrics.resolvedBookHeight(coverW);
+        const spineW = 5.0;
+        const edgeW = 3.0;
+
+        return Align(
+          alignment: Alignment.bottomCenter,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              ShimmerBox(
+                width: spineW,
+                height: coverH,
+                borderRadius: 2,
+                baseColor: LibraryShimmer._base,
+                highlightColor: LibraryShimmer._highlight,
+              ),
+              ShimmerBox(
+                width: coverW,
+                height: coverH,
+                borderRadius: 3,
+                baseColor: LibraryShimmer._base,
+                highlightColor: LibraryShimmer._highlight,
+              ),
+              ShimmerBox(
+                width: edgeW,
+                height: coverH,
+                borderRadius: 1,
+                baseColor: LibraryShimmer._base,
+                highlightColor: LibraryShimmer._highlight,
+              ),
             ],
           ),
         );
@@ -61,17 +231,55 @@ class LibraryShimmer extends StatelessWidget {
   }
 }
 
-class _BookShimmerCard extends StatelessWidget {
+class _ShelfPlankShimmer extends StatelessWidget {
+  const _ShelfPlankShimmer();
+
   @override
   Widget build(BuildContext context) {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        ShimmerBox(
+          width: double.infinity,
+          height: ShelfMetrics.totalShelfHeight,
+          borderRadius: 4,
+          baseColor: LibraryShelfTheme.shelfShadow.withValues(alpha: 0.55),
+          highlightColor: LibraryShelfTheme.shelfMid.withValues(alpha: 0.75),
+        ),
+      ],
+    );
+  }
+}
+
+class _WallLabelShimmer extends StatelessWidget {
+  const _WallLabelShimmer();
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
       children: const [
-        ShimmerBox(width: double.infinity, height: 200, borderRadius: 12),
-        SizedBox(height: 12),
-        ShimmerBox(width: 120, height: 14, borderRadius: 6),
-        SizedBox(height: 8),
-        ShimmerBox(width: 80, height: 12, borderRadius: 6),
+        ShimmerBox(
+          width: double.infinity,
+          height: 12,
+          borderRadius: 4,
+          baseColor: LibraryShimmer._base,
+          highlightColor: LibraryShimmer._highlight,
+        ),
+        SizedBox(height: 5),
+        ShimmerBox(
+          width: double.infinity,
+          height: 10,
+          borderRadius: 4,
+          baseColor: LibraryShimmer._base,
+          highlightColor: LibraryShimmer._highlight,
+        ),
+        SizedBox(height: 5),
+        ShimmerBox(
+          width: 72,
+          height: 9,
+          borderRadius: 4,
+          baseColor: LibraryShimmer._base,
+          highlightColor: LibraryShimmer._highlight,
+        ),
       ],
     );
   }
@@ -91,7 +299,25 @@ class SearchShimmer extends StatelessWidget {
         mainAxisSpacing: 16,
       ),
       itemCount: 4,
-      itemBuilder: (_, __) => _BookShimmerCard(),
+      itemBuilder: (_, __) => const _LegacyBookShimmerCard(),
+    );
+  }
+}
+
+class _LegacyBookShimmerCard extends StatelessWidget {
+  const _LegacyBookShimmerCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        ShimmerBox(width: double.infinity, height: 200, borderRadius: 12),
+        SizedBox(height: 12),
+        ShimmerBox(width: 120, height: 14, borderRadius: 6),
+        SizedBox(height: 8),
+        ShimmerBox(width: 80, height: 12, borderRadius: 6),
+      ],
     );
   }
 }

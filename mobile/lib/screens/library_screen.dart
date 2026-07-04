@@ -21,12 +21,7 @@ import '../widgets/app_drawer.dart';
 class LibraryScreen extends GetView<LibraryController> {
   const LibraryScreen({super.key});
 
-  int _headerBookCount() {
-    if (controller.status.value == LibraryStatus.success) {
-      return controller.ebooks.length;
-    }
-    return 0;
-  }
+  int _headerBookCount() => controller.ebooks.length;
 
   @override
   Widget build(BuildContext context) {
@@ -111,76 +106,79 @@ class LibraryScreen extends GetView<LibraryController> {
   }
 
   Widget _buildBody(BuildContext context) {
-    switch (controller.status.value) {
-      case LibraryStatus.loading:
-        return const LoadingWidget(key: ValueKey('loading'));
-      case LibraryStatus.error:
-        return ErrorStateWidget(
-          key: const ValueKey('error'),
-          message: controller.errorMessage.value,
-          onRetry: controller.loadEbooks,
-        );
-      case LibraryStatus.empty:
-        return EmptyStateWidget(
-          key: const ValueKey('empty'),
-          title: 'No books yet',
-          message:
-              'Upload your first ebook to start building your personal library.',
-          actionLabel: 'Upload ebook',
-          onAction: controller.openUpload,
-        );
-      case LibraryStatus.success:
-        return RefreshIndicator(
-          key: ValueKey(
-            'success-${controller.ebooks.length}-${controller.recentlyRead.length}',
-          ),
-          color: LibraryShelfTheme.navActive,
-          backgroundColor: LibraryShelfTheme.shelfMid,
-          strokeWidth: 2.5,
-          displacement: 56,
-          onRefresh: controller.loadEbooks,
-          child: Obx(() {
-            final ebooks = controller.ebooks;
-            final booksPerRow = _booksPerRow(context);
-            final shelfCount = ebooks.isEmpty
-                ? 0
-                : (ebooks.length / booksPerRow).ceil();
-
-            return CustomScrollView(
-              physics: const AlwaysScrollableScrollPhysics(
-                parent: BouncingScrollPhysics(),
-              ),
-              slivers: [
-                SliverToBoxAdapter(
-                  child: RecentlyReadSection(
-                    shelfStyle: true,
-                    items: controller.recentlyRead,
-                    ebooksById: controller.ebooksById,
-                    onOpen: (ebook) => _openDetails(context, ebook),
-                    onContinue: controller.openReader,
-                  ),
-                ),
-                SliverPadding(
-                  padding: const EdgeInsets.only(top: 8, bottom: 100),
-                  sliver: SliverList(
-                    delegate: SliverChildBuilderDelegate(
-                      (context, shelfIndex) => BookshelfRow(
-                        books: _booksOnShelf(ebooks, shelfIndex, booksPerRow),
-                        booksPerRow: booksPerRow,
-                        onOpenDetails: (ebook) => _openDetails(context, ebook),
-                        onRead: controller.openReader,
-                        onDownload: controller.downloadEbook,
-                        onDelete: (ebook) => _confirmDelete(context, ebook),
-                      ),
-                      childCount: shelfCount,
-                    ),
-                  ),
-                ),
-              ],
-            );
-          }),
-        );
+    if (!controller.hasLoadedOnce && controller.status.value == LibraryStatus.loading) {
+      return const LoadingWidget(key: ValueKey('loading'));
     }
+
+    if (controller.status.value == LibraryStatus.error && controller.ebooks.isEmpty) {
+      return ErrorStateWidget(
+        key: const ValueKey('error'),
+        message: controller.errorMessage.value,
+        onRetry: controller.loadEbooks,
+      );
+    }
+
+    if (controller.status.value == LibraryStatus.empty) {
+      return EmptyStateWidget(
+        key: const ValueKey('empty'),
+        title: 'No books yet',
+        message:
+            'Upload your first ebook to start building your personal library.',
+        actionLabel: 'Upload ebook',
+        onAction: controller.openUpload,
+      );
+    }
+
+    return RefreshIndicator(
+      key: ValueKey(
+        'success-${controller.ebooks.length}-${controller.recentlyRead.length}',
+      ),
+      color: LibraryShelfTheme.navActive,
+      backgroundColor: LibraryShelfTheme.shelfMid,
+      strokeWidth: 2.5,
+      displacement: 56,
+      onRefresh: controller.refreshEbooks,
+      child: Obx(() {
+        final ebooks = controller.ebooks;
+        final booksPerRow = _booksPerRow(context);
+        final shelfCount = ebooks.isEmpty
+            ? 0
+            : (ebooks.length / booksPerRow).ceil();
+
+        return CustomScrollView(
+          physics: const AlwaysScrollableScrollPhysics(
+            parent: BouncingScrollPhysics(),
+          ),
+          slivers: [
+            SliverToBoxAdapter(
+              child: RecentlyReadSection(
+                shelfStyle: true,
+                items: controller.recentlyRead,
+                ebooksById: controller.ebooksById,
+                onOpen: (ebook) => _openDetails(context, ebook),
+                onContinue: controller.openReader,
+              ),
+            ),
+            SliverPadding(
+              padding: const EdgeInsets.only(top: 8, bottom: 100),
+              sliver: SliverList(
+                delegate: SliverChildBuilderDelegate(
+                  (context, shelfIndex) => BookshelfRow(
+                    books: _booksOnShelf(ebooks, shelfIndex, booksPerRow),
+                    booksPerRow: booksPerRow,
+                    onOpenDetails: (ebook) => _openDetails(context, ebook),
+                    onRead: controller.openReader,
+                    onDownload: controller.downloadEbook,
+                    onDelete: (ebook) => _confirmDelete(context, ebook),
+                  ),
+                  childCount: shelfCount,
+                ),
+              ),
+            ),
+          ],
+        );
+      }),
+    );
   }
 
   void _openDetails(BuildContext context, Ebook ebook) {

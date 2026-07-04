@@ -48,7 +48,7 @@ class UploadController extends GetxController {
       AppFeedback.success('Added to library', message: title);
 
       if (Get.isRegistered<LibraryController>()) {
-        Get.find<LibraryController>().loadEbooks();
+        Get.find<LibraryController>().refreshEbooks();
       }
     } catch (_) {
       _isLeaving = false;
