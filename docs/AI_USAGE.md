@@ -15,9 +15,8 @@
 
 ### Planning and architecture
 
-- Read and summarized `MASTER_PROJECT_SPEC.md` and assignment requirements.
-- Resolved stack conflict (GetX per master spec vs Riverpod in `PROJECT_CONTEXT.md`).
-- Designed folder structure, API envelope format, and phased delivery plan.
+- Summarized assignment requirements and designed API envelope, folder structure, and phased delivery.
+- Chose **GetX** for Flutter state management and navigation.
 
 ### Backend (Rails)
 
@@ -26,8 +25,8 @@
 
 ### Frontend (Flutter)
 
-- AI-assisted GetX controllers, Dio client, screens, bookshelf UI, and widget tests.
-- **Manually reviewed and fixed:** `File.writeAsBytes` bug in download, physical-device IP config (`api_config.dart`), Windows firewall/network issues, `snackBarTheme` API fix.
+- AI-assisted GetX controllers, Dio client, bookshelf UI, EPUB reader, downloads tab, and widget tests.
+- **Manually reviewed and fixed:** `File.writeAsBytes` in download, `api_config.dart` connection modes, Windows firewall, reader UX, server-down state.
 
 ### Documentation
 
@@ -43,16 +42,15 @@
 | Issue | Resolution |
 |-------|------------|
 | `snackBarBehavior` on `ThemeData` | Replaced with `snackBarTheme` |
-| `androidLanHost` hardcoded to old Wi-Fi IP | Updated after `ipconfig` review |
+| `androidLanHost` hardcoded to old Wi-Fi IP | Replaced with `AndroidConnectionMode` + `pcLanIp`; documented for reviewers |
 | Default counter `widget_test.dart` | Removed; replaced with focused widget tests |
 | `directory.writeAsBytes` in download | Fixed to `File(path).writeAsBytes` |
-| Riverpod / clean-architecture in PROJECT_CONTEXT | Deferred; followed MASTER spec (GetX) |
 
 ## Ownership and review
 
 All AI output was:
 
-- Run through `bundle exec rspec`, `rubocop`, `flutter analyze`, and `flutter test`
+- Run through `bundle exec rspec`, `rubocop`, `flutter analyze`, and `flutter test` (42 + 15 tests — see [test-results/TEST_RUN_OUTPUT.md](test-results/TEST_RUN_OUTPUT.md))
 - Tested manually on physical Android device against local Rails API
 - Adjusted to match assignment deliverables and product UX (loading, empty, error states)
 

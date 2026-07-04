@@ -1,80 +1,102 @@
 # Manual Testing Checklist
 
-Use this checklist before submission. Run backend (`bundle exec rails server`) and Flutter app together.
+Use before sharing the repo or submitting the assignment. Run the **Rails API** and **Flutter app** together.
+
+**Setup reminder:** Configure `mobile/lib/core/config/api_config.dart` for your device (emulator / LAN IP / USB). See root [README.md](../README.md#3-configure-flutter-api-url).
+
+---
 
 ## Environment
 
-- [x] PostgreSQL running
-- [x] `DATABASE_PASSWORD` set
-- [x] API health: `GET /api/v1/health` returns 200
-- [x] Flutter `api_config.dart` matches your device (emulator / LAN IP / USB)
+- [ ] PostgreSQL running
+- [ ] `DATABASE_PASSWORD` set when starting Rails
+- [ ] API health: `GET http://localhost:3000/api/v1/health` → 200
+- [ ] `api_config.dart` matches your device mode
+- [ ] Physical device: health URL works in phone browser (if using Wi-Fi mode)
+
+---
 
 ## Upload
 
-- [x] Open Upload screen from library FAB
-- [x] Validation: title required without file → error shown
-- [x] Validation: file required without title → error shown
-- [x] Pick valid PDF → upload succeeds → snackbar shown
-- [x] Upload non-PDF → server validation error shown
-- [x] Upload >100 MB → rejected with clear message
+- [ ] Open Upload from library FAB
+- [ ] Validation: title required without file → error shown
+- [ ] Validation: file required without title → error shown
+- [ ] Upload valid PDF → success → appears in library
+- [ ] Upload valid EPUB → success → appears in library
+- [ ] Optional cover image → shows on book card
+- [ ] Upload non-PDF/EPUB → server validation error
+- [ ] Upload > 100 MB → rejected with clear message
 
-
+---
 
 ## Library
 
-- [x] Empty state when no books
-- [x] Books appear on bookshelf layout after upload
-- [x] Pull-to-refresh reloads list
-- [x] Sort by Recent / Title / Author works
-- [x] Loading spinner while fetching
-- [x] Error state + Retry when server stopped
+- [ ] Empty state when no books
+- [ ] Bookshelf layout after upload
+- [ ] Continue Reading strip (after reading a book)
+- [ ] Pull-to-refresh reloads list
+- [ ] Sort by Recent / Title / Author
+- [ ] Loading shimmer while fetching
+- [ ] Server stopped → themed “server unavailable” + Try again
+- [ ] Generic error + Retry for other failures
 
-
+---
 
 ## Search
 
-- [x] Idle state before typing
-- [x] Debounced search (no request per keystroke)
-- [x] Search by title returns matches
-- [x] Search by author returns matches
-- [x] Search by filename returns matches
-- [x] No results → empty state
-- [x] Match highlighting visible on cards
-- [x] Sort works on search results
+- [ ] Idle state before typing
+- [ ] Debounced search (not every keystroke)
+- [ ] Search by title, author, filename
+- [ ] No results → empty state
+- [ ] Match highlighting on cards
+- [ ] Sort on search results
+- [ ] File-type quick filters (PDF / EPUB)
 
-
+---
 
 ## Read
 
-- [x] Tap book → PDF opens in reader
-- [x] Page navigation works
-- [x] Zoom (double-tap) works
-- [x] Full-screen toggle works
-- [x] Re-open book → last page remembered
+- [ ] PDF opens in reader
+- [ ] EPUB opens in reader
+- [ ] Page / chapter navigation
+- [ ] PDF zoom (double-tap)
+- [ ] Reading settings (font size for EPUB)
+- [ ] Re-open book → last position remembered
+- [ ] Progress footer shows page / percent
 
-
+---
 
 ## Download
 
-- [x] Download from library card → success snackbar
-- [x] File opens or saves on device
+- [ ] Download from library → progress sheet
+- [ ] Book appears in **Downloads** tab
+- [ ] Read downloaded book offline (local file)
+- [ ] Remove download from Downloads tab
 
-
+---
 
 ## Delete
 
-- [x] Delete shows confirmation dialog
-- [x] Cancel keeps book
-- [x] Confirm removes book from library and server
-- [x] Failure shows snackbar (e.g. server offline)
+- [ ] Delete shows confirmation dialog
+- [ ] Cancel keeps book
+- [ ] Confirm removes from library and server
+- [ ] Failure snackbar when server offline
 
+---
 
+## Dashboard & About
+
+- [ ] Bottom nav: Library, Downloads, About
+- [ ] About shows app name and developer info
+
+---
 
 ## Automated tests
 
 ```powershell
 # Backend
 cd backend
+$env:DATABASE_PASSWORD = "postgres"
 bundle exec rspec
 bundle exec rubocop
 
@@ -84,23 +106,25 @@ flutter analyze
 flutter test
 ```
 
-- [x] All backend specs pass
-- [x] All Flutter tests pass
-- [x] No analyze errors
+- [ ] RSpec: 42 examples, 0 failures
+- [ ] Flutter: all tests pass
+- [ ] `flutter analyze`: no issues
 
+See [test-results/TEST_RUN_OUTPUT.md](test-results/TEST_RUN_OUTPUT.md) for sample output.
 
+---
 
 ## Demo capture (submission)
 
 Record or screenshot:
 
 1. Empty library
-2. Upload flow
-3. Bookshelf with books
+2. Upload flow (PDF or EPUB)
+3. Bookshelf with books + Continue Reading
 4. Search with highlights
-5. PDF reader (full screen)
-6. Download success
+5. Reader (PDF or EPUB)
+6. Downloads tab with offline book
 7. Delete confirmation
-8. Test run output (`rspec` + `flutter test`)
+8. Terminal: `rspec` + `flutter test` passing
 
-Save screenshots to `docs/screenshots/` (create folder when capturing).
+Save to `docs/screenshots/` — see [screenshots/README.md](screenshots/README.md).

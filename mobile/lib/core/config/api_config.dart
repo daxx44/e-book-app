@@ -21,10 +21,12 @@ class ApiConfig {
   static const int receiveTimeoutMs = 60000;
 
   /// Change this based on how you run the app.
+  /// Use [physicalDevice] on a real phone; [emulator] only inside Android emulator.
   static const AndroidConnectionMode androidMode = AndroidConnectionMode.physicalDevice;
 
-  /// Your PC IPv4 from `ipconfig` (active adapter — currently Ethernet 4).
+  /// Your PC IPv4 from `ipconfig` / `ifconfig` (active Wi-Fi or Ethernet adapter).
   /// Only used when [androidMode] is [AndroidConnectionMode.physicalDevice].
+  /// Example: `192.168.1.42` — replace with YOUR machine's address.
   static const String pcLanIp = '10.162.10.243';
 
   static String get baseUrl {

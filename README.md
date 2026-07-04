@@ -1,23 +1,29 @@
 # Digital Ebook Library
 
-Full-stack ebook library for uploading, browsing, searching, reading, downloading, and deleting PDF ebooks.
+Full-stack ebook library for uploading, browsing, searching, reading, downloading, and deleting **PDF and EPUB** ebooks.
 
 | Layer | Stack |
 |-------|--------|
 | Backend | Ruby 3.3+, Rails 8 API, PostgreSQL, Active Storage |
-| Mobile | Flutter 3, GetX, Dio, Syncfusion PDF viewer |
+| Mobile | Flutter 3, GetX, Dio, Syncfusion PDF viewer, epub_view |
 
-**Assignment:** Sagar Fab International Company — Digital Ebook Library
+**Assignment:** Sagar Fab International Company — Full Stack Developer (Rails + Flutter)
+
+**What is covered:** See [docs/IMPLEMENTATION_STATUS.md](docs/IMPLEMENTATION_STATUS.md) for assignment checklist vs implementation.
 
 ---
 
 ## Project structure
 
+Clone the repo anywhere on your machine. Example layout:
+
 ```
-E-Book app/
-├── backend/          # Rails 8 API-only app
-├── mobile/           # Flutter client (package name: frontend)
-└── docs/             # Spec, API, architecture, testing
+ebook-library/          ← your clone folder (name is up to you)
+├── backend/            # Rails 8 API-only app
+├── mobile/             # Flutter client (package name: frontend)
+├── docs/               # Spec, API, testing, screenshots
+├── scripts/            # Helper scripts (e.g. Windows firewall)
+└── docker-compose.yml  # Optional PostgreSQL in Docker
 ```
 
 ---
@@ -26,47 +32,54 @@ E-Book app/
 
 ### Backend
 
-- [Ruby 3.3+](https://rubyinstaller.org/) (with **Add Ruby to PATH** checked during install)
-- [PostgreSQL 17+](https://www.postgresql.org/download/windows/)
-- Bundler (`gem install bundler`)
+- [Ruby 3.3+](https://rubyinstaller.org/) — check **Add Ruby to PATH** during install
+- [PostgreSQL 17+](https://www.postgresql.org/download/)
+- Bundler: `gem install bundler`
 
 ### Mobile
 
-- [Flutter 3](https://docs.flutter.dev/get-started/install) (Dart 3)
-- Android Studio (emulator) or a physical Android device
+- [Flutter 3](https://docs.flutter.dev/get-started/install) (Dart 3.9+)
+- Android Studio (emulator) **or** a physical Android device with USB debugging
 
 ---
 
 ## Quick start
 
-You need **two terminals**: one for the Rails API, one for the Flutter app.
+You need **two terminals**: Rails API first, then Flutter.
 
-### 1. Backend setup (first time only)
+Replace `path/to/ebook-library` with wherever you cloned this repo.
 
-Open PowerShell and run **one command per line**:
+### 1. Backend setup (first time)
+
+**PowerShell (Windows):**
 
 ```powershell
-cd "C:\Users\Darshan\StudioProjects\E-Book app\backend"
+cd path/to/ebook-library/backend
 bundle install
+$env:DATABASE_PASSWORD = "postgres"   # use your PostgreSQL password
 bundle exec rails db:create db:migrate
+bundle exec rails db:seed             # optional: 3 sample PDFs
 ```
 
-Set your PostgreSQL password (default user is usually `postgres`):
+**macOS / Linux:**
 
-```powershell
-$env:DATABASE_PASSWORD = "postgres"
+```bash
+cd path/to/ebook-library/backend
+bundle install
+export DATABASE_PASSWORD=postgres
+bundle exec rails db:create db:migrate
+bundle exec rails db:seed
 ```
 
-> **Windows:** If `bundle` is not found, add Ruby to PATH for this session:
+> **Windows:** If `bundle` is not found, add Ruby to PATH, e.g. `C:\Ruby33-x64\bin`, or run:
 > ```powershell
 > $env:Path = "C:\Ruby33-x64\bin;" + $env:Path
 > ```
-> Or add `C:\Ruby33-x64\bin` permanently via **Environment Variables → Path**.
 
 ### 2. Start the API server
 
 ```powershell
-cd "C:\Users\Darshan\StudioProjects\E-Book app\backend"
+cd path/to/ebook-library/backend
 $env:DATABASE_PASSWORD = "postgres"
 bundle exec rails server
 ```
@@ -74,10 +87,12 @@ bundle exec rails server
 Wait until you see:
 
 ```
-* Listening on http://127.0.0.1:3000
+* Listening on http://0.0.0.0:3000
 ```
 
-Verify in a **second** PowerShell window:
+Puma is configured to bind `0.0.0.0` so phones on the same Wi-Fi can reach the API.
+
+**Verify** (second terminal):
 
 ```powershell
 Invoke-WebRequest http://localhost:3000/api/v1/health
@@ -85,62 +100,94 @@ Invoke-WebRequest http://localhost:3000/api/v1/health
 
 Expected: HTTP `200` with `"status":"ok"`.
 
-### 3. Run the Flutter app
+### 3. Configure Flutter API URL
 
-In a new terminal (or Android Studio):
+Edit **`mobile/lib/core/config/api_config.dart`** before running the app:
+
+| How you run the app | Set in `api_config.dart` |
+|---------------------|----------------------------|
+| **Android emulator** | `androidMode = AndroidConnectionMode.emulator` → host `10.0.2.2` |
+| **Physical phone (Wi-Fi)** | `androidMode = AndroidConnectionMode.physicalDevice` and `pcLanIp = '<YOUR_PC_IP>'` |
+| **Physical phone (USB)** | `androidMode = AndroidConnectionMode.usbAdbReverse`, then run `adb reverse tcp:3000 tcp:3000` |
+
+**Find your PC IP (Windows):**
 
 ```powershell
-cd "C:\Users\Darshan\StudioProjects\E-Book app\mobile"
+ipconfig
+```
+
+Use the **IPv4 Address** of your active adapter (Wi-Fi or Ethernet), e.g. `192.168.1.42`.  
+Do **not** use a developer-specific path or IP from this README — each machine is different.
+
+Example `api_config.dart`:
+
+```dart
+static const AndroidConnectionMode androidMode = AndroidConnectionMode.emulator;
+static const String pcLanIp = '192.168.1.42'; // only used for physicalDevice mode
+```
+
+### 4. Run the Flutter app
+
+```powershell
+cd path/to/ebook-library/mobile
 flutter pub get
 flutter run
 ```
 
-Or open the `mobile/` folder in Android Studio and press **Run** on an Android emulator.
+> Android Studio only launches the Flutter app. **Rails must already be running** in another terminal.
 
-> **Important:** Android Studio only starts the Flutter app. The Rails server must already be running in a separate terminal.
+After changing `api_config.dart` or adding assets, do a **full restart** (`flutter run`), not hot reload.
 
 ---
 
-## API URLs
+## API URLs summary
 
 | Client | Base URL |
 |--------|----------|
-| Rails (local) | `http://localhost:3000/api/v1` |
+| Rails on same PC | `http://localhost:3000/api/v1` |
 | Android emulator | `http://10.0.2.2:3000/api/v1` |
-| Physical device | `http://<your-pc-lan-ip>:3000/api/v1` |
+| Physical Android device | `http://<YOUR_PC_IP>:3000/api/v1` |
+| USB + adb reverse | `http://127.0.0.1:3000/api/v1` |
 
-The Flutter app picks the URL in `mobile/lib/core/config/api_config.dart`:
+---
 
-- **Emulator:** `androidLanHost = null` → uses `10.0.2.2`
-- **Real phone:** `androidLanHost = '192.168.x.x'` (your PC Wi-Fi IP from `ipconfig`)
+## Physical device networking (Windows)
 
-Phone and PC must be on the **same Wi-Fi**. Restart Rails after changing Puma config so it listens on `0.0.0.0`.
+If the phone cannot reach the API:
+
+1. Confirm Rails shows `Listening on http://0.0.0.0:3000`
+2. Set `pcLanIp` to your current `ipconfig` IPv4
+3. Phone and PC on the **same Wi-Fi**
+4. Allow inbound port 3000 — PowerShell **as Administrator**:
+   ```powershell
+   cd path/to/ebook-library/scripts
+   .\allow-rails-port-3000.ps1
+   ```
+5. Test in phone browser: `http://<YOUR_PC_IP>:3000/api/v1/health`
+6. Full restart the Flutter app
+
+**USB alternative (no firewall change):**
+
+```powershell
+adb reverse tcp:3000 tcp:3000
+```
+
+Set `androidMode = AndroidConnectionMode.usbAdbReverse` in `api_config.dart`.
 
 ---
 
 ## Demo walkthrough
 
-With the backend running and the app open on the emulator:
+With backend running and the app open:
 
-1. **Library (home)** — Shows your ebook collection or an empty state with an Upload action.
-2. **Upload** — Tap the **Upload** FAB → fill title (required), author, description → choose a PDF → **Upload**.
-3. **Browse** — Return to the library; books appear on a bookshelf-style layout. Pull down to refresh.
-4. **Read** — Tap a book card to open the in-app PDF reader (Syncfusion viewer).
-5. **Search** — Tap the search icon → type a keyword (title, author, or filename). Results update after a short debounce.
-6. **Download** — Use the download action on a book card; the file is saved and opened on the device.
-7. **Delete** — Use delete on a card → confirm in the dialog. The ebook is soft-deleted on the server.
-
-### Sample API calls (optional)
-
-```powershell
-# List ebooks
-Invoke-WebRequest http://localhost:3000/api/v1/ebooks
-
-# Search
-Invoke-WebRequest "http://localhost:3000/api/v1/ebooks/search?q=flutter"
-```
-
-Full API docs: [docs/API.md](docs/API.md)
+1. **Library** — Bookshelf home; empty state if no books; **Continue Reading** when you have history
+2. **Upload** — FAB → title (required), author, description → PDF or EPUB → optional cover → Upload
+3. **Browse** — Wooden shelf layout; pull to refresh; sort from header
+4. **Search** — Search icon → debounced search, filters, highlighted results
+5. **Read** — Open book → in-app PDF or EPUB reader; progress saved
+6. **Download** — Download with progress → **Downloads** tab for offline read
+7. **Delete** — Delete on card → confirm dialog
+8. **About** — App info (bottom nav)
 
 ---
 
@@ -155,6 +202,8 @@ bundle exec rspec
 bundle exec rubocop
 ```
 
+**Last run (4 Jul 2026):** `42 examples, 0 failures`
+
 ### Mobile
 
 ```powershell
@@ -163,7 +212,11 @@ flutter analyze
 flutter test
 ```
 
-See [docs/TESTING.md](docs/TESTING.md) for the full testing strategy.
+**Last run (4 Jul 2026):** analyze clean, **15 tests passed**
+
+Full output and file list: [docs/test-results/TEST_RUN_OUTPUT.md](docs/test-results/TEST_RUN_OUTPUT.md)  
+Strategy: [docs/TESTING.md](docs/TESTING.md)  
+Manual checklist: [docs/MANUAL_TESTING.md](docs/MANUAL_TESTING.md)
 
 ---
 
@@ -171,11 +224,14 @@ See [docs/TESTING.md](docs/TESTING.md) for the full testing strategy.
 
 | Document | Description |
 |----------|-------------|
-| [docs/MASTER_PROJECT_SPEC.md](docs/MASTER_PROJECT_SPEC.md) | Full project specification |
+| [docs/README.md](docs/README.md) | Documentation index |
+| [docs/IMPLEMENTATION_STATUS.md](docs/IMPLEMENTATION_STATUS.md) | Assignment coverage vs built features |
 | [docs/API.md](docs/API.md) | REST API reference |
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | System architecture |
 | [docs/DATABASE.md](docs/DATABASE.md) | Database schema |
-| [docs/DEVELOPMENT_PLAN.md](docs/DEVELOPMENT_PLAN.md) | Phased development plan |
+| [docs/TESTING.md](docs/TESTING.md) | Automated testing guide |
+| [docs/MANUAL_TESTING.md](docs/MANUAL_TESTING.md) | Pre-submission manual checklist |
+| [docs/AI_USAGE.md](docs/AI_USAGE.md) | AI tools usage report |
 | [backend/README.md](backend/README.md) | Backend-only setup |
 | [mobile/README.md](mobile/README.md) | Flutter-only setup |
 
@@ -185,101 +241,54 @@ See [docs/TESTING.md](docs/TESTING.md) for the full testing strategy.
 
 ### `bundle` or `ruby` not recognized
 
-Ruby is not on your PATH. Run:
+Add Ruby `bin` folder to PATH (see Quick start).
+
+### App cannot connect (emulator)
+
+- Rails must be running
+- Use `AndroidConnectionMode.emulator` (`10.0.2.2`, not `localhost` on the device)
+
+### App cannot connect (physical phone)
+
+See [Physical device networking](#physical-device-networking-windows) above.
+
+### Asset not found (`app_icon.png`)
+
+Run from `mobile/` folder, then:
 
 ```powershell
-$env:Path = "C:\Ruby33-x64\bin;" + $env:Path
+flutter pub get
+flutter run
 ```
 
-Then retry. Add `C:\Ruby33-x64\bin` to your user **Path** permanently to fix this for all terminals.
-
-### PowerShell “Unexpected token” when pasting commands
-
-Run **one command per line**, or separate commands with semicolons:
-
-```powershell
-cd "...\backend"; $env:DATABASE_PASSWORD = "postgres"; bundle exec rails server
-```
-
-### `ridk enable` fails (script execution policy)
-
-You do not need `ridk` to run the server. If required for native gems, use:
-
-```powershell
-C:\Ruby33-x64\bin\ridk.cmd enable
-```
-
-### App cannot connect from emulator
-
-- Confirm Rails is running (`Listening on http://127.0.0.1:3000` or `0.0.0.0:3000`).
-- Emulator must use `10.0.2.2`, not `localhost` — set `androidLanHost = null` in `api_config.dart`.
-
-### App cannot connect from physical phone
-
-The request URL `http://<your-pc-ip>:3000/...` must use your active adapter IP from `ipconfig`, but **Windows Firewall** often blocks inbound port 3000.
-
-**Option A — Wi-Fi (recommended):**
-
-1. Set `androidMode = AndroidConnectionMode.physicalDevice` and `pcLanIp` in `mobile/lib/core/config/api_config.dart`.
-2. Stop all old Rails servers, start one fresh:
-   ```powershell
-   bundle exec rails server
-   ```
-3. **Allow port 3000 in firewall** — run PowerShell **as Administrator**:
-   ```powershell
-   cd scripts
-   .\allow-rails-port-3000.ps1
-   ```
-4. Test on phone browser: `http://10.162.10.243:3000/api/v1/health` (use your `ipconfig` IPv4)
-5. Full restart the Flutter app.
-
-**Option B — USB (no firewall change):**
-
-1. Phone connected via USB with USB debugging on.
-2. Run: `adb reverse tcp:3000 tcp:3000`
-3. Set `androidMode = AndroidConnectionMode.usbAdbReverse` in `api_config.dart`
-4. Restart the Flutter app.
-
-- Phone and PC must be on the **same Wi-Fi** for Option A.
-- Only **one** Rails server should run (check with `netstat -ano | findstr :3000`).
+If needed: `flutter clean` → `flutter pub get` → `flutter run`.
 
 ### “A server is already running”
 
-Stop the existing server with `Ctrl+C` in its terminal, or delete `backend/tmp/pids/server.pid` and start again.
+`Ctrl+C` in the Rails terminal, or delete `backend/tmp/pids/server.pid`.
 
 ### VIPS warnings on Rails boot
 
-Harmless on Windows when optional image modules are missing. The API still works.
+Harmless on Windows when optional image modules are missing.
 
 ### Database connection errors
 
-- Ensure PostgreSQL service is running.
-- Confirm `DATABASE_PASSWORD` matches your `postgres` user password.
-- Run `bundle exec rails db:create db:migrate` if databases are missing.
+- PostgreSQL service running
+- `DATABASE_PASSWORD` matches your `postgres` user
+- Run `bundle exec rails db:create db:migrate`
 
 ---
 
 ## Docker (PostgreSQL only)
 
-Start PostgreSQL in Docker, run Rails locally against it:
-
 ```powershell
+cd path/to/ebook-library
 docker compose up -d
 cd backend
 $env:DATABASE_PASSWORD = "postgres"
 bundle exec rails db:create db:migrate db:seed
 bundle exec rails server
 ```
-
-## Demo data (seeds)
-
-```powershell
-cd backend
-$env:DATABASE_PASSWORD = "postgres"
-bundle exec rails db:seed
-```
-
-Loads 3 sample PDF ebooks using the test fixture PDF.
 
 ---
 
@@ -289,10 +298,10 @@ Loads 3 sample PDF ebooks using the test fixture PDF.
 |--------|----------|-------------|
 | GET | `/api/v1/health` | Health check |
 | GET | `/api/v1/ebooks?sort=recent\|title\|author` | List ebooks |
-| POST | `/api/v1/ebooks` | Upload PDF (multipart) |
+| POST | `/api/v1/ebooks` | Upload PDF/EPUB (+ optional cover) |
 | GET | `/api/v1/ebooks/:id` | Ebook details |
 | GET | `/api/v1/ebooks/search?q=&sort=` | Search |
-| GET | `/api/v1/ebooks/:id/download` | Download PDF |
+| GET | `/api/v1/ebooks/:id/download` | Download file |
 | DELETE | `/api/v1/ebooks/:id` | Soft delete |
 
 Full reference: [docs/API.md](docs/API.md)
@@ -301,41 +310,23 @@ Full reference: [docs/API.md](docs/API.md)
 
 ## Screenshots
 
-Capture demo screenshots and save to [docs/screenshots/](docs/screenshots/README.md):
-
-- Empty library, upload, bookshelf, search, reader, delete dialog, test output
+Save captures to [docs/screenshots/](docs/screenshots/README.md) including terminal output from `rspec` and `flutter test`.
 
 ---
 
 ## AI tools used
 
-See [docs/AI_USAGE.md](docs/AI_USAGE.md) for the full AI usage report required by the assignment.
-
-**Summary:** Cursor AI assisted with scaffolding, docs, and debugging. All code was reviewed, tested (`rspec`, `flutter test`), and verified on a physical Android device.
+See [docs/AI_USAGE.md](docs/AI_USAGE.md).
 
 ---
 
 ## Known limitations
 
-- **PDF only** — EPUB not supported (assignment minimum is PDF).
-- **No authentication** — single-user local library by design.
-- **No cloud storage** — files stored via Rails Active Storage on local disk.
-- **Cover images** — generated color covers with initials (not PDF thumbnails).
-- **Reader** — re-downloads PDF on open; cached in temp directory for the session.
-- **Physical device** — requires LAN IP + firewall rule or USB `adb reverse`.
-- **Pagination** — not implemented; suitable for personal libraries.
-
----
-
-## Future improvements
-
-- User accounts and per-user libraries
-- EPUB reader support
-- PDF thumbnail generation for covers
-- Offline library cache
-- Pagination for large collections
-- Docker image for full backend (not just Postgres)
-- Recently read section on home screen
+- No user authentication (single-user local library)
+- Active Storage on local disk (no S3)
+- No API pagination
+- Tested primarily on Android
+- RuboCop: 2 minor style offenses in one spec file
 
 ---
 
@@ -343,13 +334,14 @@ See [docs/AI_USAGE.md](docs/AI_USAGE.md) for the full AI usage report required b
 
 | Deliverable | Location |
 |-------------|----------|
-| GitHub repository | Backend + mobile in monorepo |
+| GitHub repository | Backend + mobile monorepo |
 | README | This file |
+| Implementation status | [docs/IMPLEMENTATION_STATUS.md](docs/IMPLEMENTATION_STATUS.md) |
 | API docs | [docs/API.md](docs/API.md) |
 | Manual testing | [docs/MANUAL_TESTING.md](docs/MANUAL_TESTING.md) |
+| Test results | [docs/test-results/TEST_RUN_OUTPUT.md](docs/test-results/TEST_RUN_OUTPUT.md) |
 | AI usage report | [docs/AI_USAGE.md](docs/AI_USAGE.md) |
 | Screenshots | [docs/screenshots/](docs/screenshots/) |
-| Automated tests | `bundle exec rspec`, `flutter test` |
 | CI | [.github/workflows/ci.yml](.github/workflows/ci.yml) |
 
 ---

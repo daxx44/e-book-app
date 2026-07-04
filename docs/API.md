@@ -1,8 +1,15 @@
 # API Documentation
 
-Base URL
+## Base URL
 
-http://localhost:3000/api/v1
+| Environment | Base URL |
+|-------------|----------|
+| Rails on developer PC | `http://localhost:3000/api/v1` |
+| Android emulator | `http://10.0.2.2:3000/api/v1` |
+| Physical Android device | `http://<YOUR_PC_IP>:3000/api/v1` |
+
+Configure the Flutter client in `mobile/lib/core/config/api_config.dart`.  
+All endpoints below are relative to the base URL (e.g. `GET /ebooks` → `GET /api/v1/ebooks`).
 
 ---
 
@@ -16,10 +23,11 @@ multipart/form-data
 
 Fields
 
-- title
-- author
+- title (required)
+- author (optional)
 - description (optional)
-- file
+- file (required) — PDF (`application/pdf`) or EPUB (`application/epub+zip`)
+- cover (optional) — JPEG, PNG, or WebP image
 
 Response
 
@@ -37,6 +45,7 @@ Response
     "file_type": "application/pdf",
     "file_size": 328,
     "filename": "sample.pdf",
+    "cover_url": "http://localhost:3000/rails/active_storage/blobs/.../cover.jpg",
     "created_at": "2026-07-02T17:00:00Z",
     "updated_at": "2026-07-02T17:00:00Z"
   },
@@ -99,7 +108,7 @@ Search by
 
 GET /ebooks/:id/download
 
-Downloads PDF.
+Downloads the ebook file (PDF or EPUB).
 
 ---
 
@@ -212,7 +221,7 @@ The improved format keeps one structure for every error type. Clients always rea
 |------|---------|
 | `blank` | Required field missing |
 | `too_large` | File exceeds 100 MB |
-| `invalid_type` | File is not a PDF |
+| `invalid_type` | File is not PDF/EPUB, or cover is not a supported image |
 | `invalid` | Generic field validation failure |
 
 ---

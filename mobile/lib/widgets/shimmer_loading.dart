@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/core/theme/app_colors.dart';
-import 'package:frontend/core/theme/library_shelf_theme.dart';
 import 'package:frontend/widgets/library/wooden_shelf_plank.dart';
 import 'package:shimmer/shimmer.dart';
 
@@ -40,11 +39,11 @@ class ShimmerBox extends StatelessWidget {
   }
 }
 
-/// Skeleton loader matching the wooden bookshelf library layout.
+/// Skeleton loader for the library — simple book placeholders on the dark shelf.
 class LibraryShimmer extends StatelessWidget {
   const LibraryShimmer({super.key});
 
-  static const _base = Color(0xFF241612);
+  static const _base = Color(0xFF2A1A15);
   static const _highlight = Color(0xFF3D2B22);
 
   @override
@@ -53,233 +52,64 @@ class LibraryShimmer extends StatelessWidget {
     final bookHeight = ShelfMetrics.bookHeightFor(context, booksPerRow);
 
     return ListView(
-      padding: const EdgeInsets.fromLTRB(0, 8, 0, 100),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 100),
       children: [
-        _ContinueReadingStrip(),
-        const SizedBox(height: 8),
-        for (var row = 0; row < 2; row++)
-          Padding(
-            padding: const EdgeInsets.only(bottom: 8),
-            child: _ShelfRowShimmer(
-              booksPerRow: booksPerRow,
-              bookHeight: bookHeight,
-            ),
-          ),
-      ],
-    );
-  }
-}
-
-class _ContinueReadingStrip extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(14, 8, 14, 0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const ShimmerBox(
-            width: 140,
-            height: 18,
-            borderRadius: 6,
-            baseColor: LibraryShimmer._base,
-            highlightColor: LibraryShimmer._highlight,
-          ),
-          const SizedBox(height: 14),
-          SizedBox(
-            height: ShelfMetrics.continueReadingStripHeight,
-            child: Row(
-              children: [
-                Expanded(
-                  child: _BookColumnShimmer(
-                    bookHeight: ShelfMetrics.resolvedBookHeight(ShelfMetrics.continueBookWidth),
-                  ),
-                ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: _BookColumnShimmer(
-                    bookHeight: ShelfMetrics.resolvedBookHeight(ShelfMetrics.continueBookWidth),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _ShelfRowShimmer extends StatelessWidget {
-  const _ShelfRowShimmer({
-    required this.booksPerRow,
-    required this.bookHeight,
-  });
-
-  final int booksPerRow;
-  final double bookHeight;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Stack(
-          clipBehavior: Clip.none,
-          alignment: Alignment.bottomCenter,
-          children: [
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: ShelfMetrics.rowHorizontalPadding),
-              child: _ShelfPlankShimmer(),
-            ),
-            Padding(
-              padding: EdgeInsets.fromLTRB(
-                ShelfMetrics.rowHorizontalPadding,
-                0,
-                ShelfMetrics.rowHorizontalPadding,
-                ShelfMetrics.bookRestInset,
-              ),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  for (var i = 0; i < booksPerRow; i++)
-                    Expanded(
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: ShelfMetrics.columnGap / 2,
-                        ),
-                        child: _BookColumnShimmer(bookHeight: bookHeight),
-                      ),
-                    ),
-                ],
-              ),
-            ),
-          ],
+        const ShimmerBox(
+          width: 128,
+          height: 16,
+          borderRadius: 6,
+          baseColor: _base,
+          highlightColor: _highlight,
         ),
-        Padding(
-          padding: const EdgeInsets.fromLTRB(
-            ShelfMetrics.rowHorizontalPadding,
-            4,
-            ShelfMetrics.rowHorizontalPadding,
-            0,
-          ),
+        const SizedBox(height: 16),
+        SizedBox(
+          height: 108,
           child: Row(
+            children: const [
+              Expanded(
+                child: ShimmerBox(
+                  width: double.infinity,
+                  height: 108,
+                  borderRadius: 8,
+                  baseColor: _base,
+                  highlightColor: _highlight,
+                ),
+              ),
+              SizedBox(width: 12),
+              Expanded(
+                child: ShimmerBox(
+                  width: double.infinity,
+                  height: 108,
+                  borderRadius: 8,
+                  baseColor: _base,
+                  highlightColor: _highlight,
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 24),
+        for (var row = 0; row < 2; row++) ...[
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               for (var i = 0; i < booksPerRow; i++)
                 Expanded(
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: ShelfMetrics.columnGap / 2,
+                    padding: const EdgeInsets.symmetric(horizontal: 4),
+                    child: ShimmerBox(
+                      width: double.infinity,
+                      height: bookHeight,
+                      borderRadius: 6,
+                      baseColor: _base,
+                      highlightColor: _highlight,
                     ),
-                    child: const _WallLabelShimmer(),
                   ),
                 ),
             ],
           ),
-        ),
-        const SizedBox(height: 4),
-      ],
-    );
-  }
-}
-
-class _BookColumnShimmer extends StatelessWidget {
-  const _BookColumnShimmer({required this.bookHeight});
-
-  final double bookHeight;
-
-  @override
-  Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final coverW = ShelfMetrics.bookWidthForColumn(constraints.maxWidth, bookHeight);
-        final coverH = ShelfMetrics.resolvedBookHeight(coverW);
-        const spineW = 5.0;
-        const edgeW = 3.0;
-
-        return Align(
-          alignment: Alignment.bottomCenter,
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              ShimmerBox(
-                width: spineW,
-                height: coverH,
-                borderRadius: 2,
-                baseColor: LibraryShimmer._base,
-                highlightColor: LibraryShimmer._highlight,
-              ),
-              ShimmerBox(
-                width: coverW,
-                height: coverH,
-                borderRadius: 3,
-                baseColor: LibraryShimmer._base,
-                highlightColor: LibraryShimmer._highlight,
-              ),
-              ShimmerBox(
-                width: edgeW,
-                height: coverH,
-                borderRadius: 1,
-                baseColor: LibraryShimmer._base,
-                highlightColor: LibraryShimmer._highlight,
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-}
-
-class _ShelfPlankShimmer extends StatelessWidget {
-  const _ShelfPlankShimmer();
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        ShimmerBox(
-          width: double.infinity,
-          height: ShelfMetrics.totalShelfHeight,
-          borderRadius: 4,
-          baseColor: LibraryShelfTheme.shelfShadow.withValues(alpha: 0.55),
-          highlightColor: LibraryShelfTheme.shelfMid.withValues(alpha: 0.75),
-        ),
-      ],
-    );
-  }
-}
-
-class _WallLabelShimmer extends StatelessWidget {
-  const _WallLabelShimmer();
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: const [
-        ShimmerBox(
-          width: double.infinity,
-          height: 12,
-          borderRadius: 4,
-          baseColor: LibraryShimmer._base,
-          highlightColor: LibraryShimmer._highlight,
-        ),
-        SizedBox(height: 5),
-        ShimmerBox(
-          width: double.infinity,
-          height: 10,
-          borderRadius: 4,
-          baseColor: LibraryShimmer._base,
-          highlightColor: LibraryShimmer._highlight,
-        ),
-        SizedBox(height: 5),
-        ShimmerBox(
-          width: 72,
-          height: 9,
-          borderRadius: 4,
-          baseColor: LibraryShimmer._base,
-          highlightColor: LibraryShimmer._highlight,
-        ),
+          const SizedBox(height: 20),
+        ],
       ],
     );
   }

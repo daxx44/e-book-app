@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/core/constants/app_assets.dart';
+import 'package:frontend/core/theme/library_shelf_theme.dart';
 
 class AppIcon extends StatelessWidget {
   const AppIcon({
@@ -20,6 +21,7 @@ class AppIcon extends StatelessWidget {
       height: size,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(borderRadius),
+        color: LibraryShelfTheme.shelfMid,
         boxShadow: showShadow
             ? [
                 BoxShadow(
@@ -36,6 +38,11 @@ class AppIcon extends StatelessWidget {
         width: size,
         height: size,
         fit: BoxFit.cover,
+        errorBuilder: (_, __, ___) => Icon(
+          Icons.menu_book_rounded,
+          size: size * 0.5,
+          color: LibraryShelfTheme.navActive,
+        ),
       ),
     );
   }

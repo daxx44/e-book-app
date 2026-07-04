@@ -105,6 +105,7 @@ class LibraryScreen extends GetView<LibraryController> {
             'Upload your first ebook to start building your personal library.',
         actionLabel: 'Upload ebook',
         onAction: controller.openUpload,
+        shelfStyle: true,
       );
     }
 

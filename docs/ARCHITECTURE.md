@@ -2,108 +2,99 @@
 
 ## Overview
 
-The Digital Ebook Library is a client-server application consisting of:
-
-- Flutter Mobile Application
-- Ruby on Rails REST API
-- PostgreSQL Database
-- Active Storage for ebook files
+The Digital Ebook Library is a client-server application:
 
 ```
-Flutter App
+Flutter App (Android)
       │
-      │ REST API (JSON)
+      │ REST JSON (Dio)
       ▼
-Ruby on Rails API
+Ruby on Rails 8 API
       │
-      ├── PostgreSQL
-      └── Active Storage
+      ├── PostgreSQL (metadata)
+      └── Active Storage (PDF/EPUB files + cover images)
 ```
 
-## Backend Responsibilities
+---
 
-- Ebook CRUD APIs
-- File Upload
-- Search
-- Download
-- Validation
-- Error Handling
+## Backend responsibilities
 
-## Frontend Responsibilities
+- Ebook CRUD APIs under `/api/v1`
+- Multipart upload (PDF, EPUB, optional cover)
+- Search (title, author, Active Storage filename)
+- Download streaming
+- Soft delete (`status: deleted`)
+- Validation and structured error responses
 
-- Display Ebook Library
-- Upload Ebook
-- Search
-- Read PDF
-- Download
-- Delete
-
-## Folder Structure
-
-### Backend
+**Key paths:**
 
 ```
-app/
-controllers/
-models/
-services/
-serializers/
+backend/app/
+  controllers/api/v1/
+  models/ebook.rb
+  services/ebooks/          # upload, list, search, delete
+  serializers/api/v1/
 ```
 
-### Flutter
+Puma binds `0.0.0.0:3000` in development so physical devices on the LAN can connect.
+
+---
+
+## Frontend responsibilities
+
+- Bookshelf library UI with Continue Reading
+- Upload, search, read, download, delete
+- Offline downloads tab (local files via `path_provider`)
+- Loading, empty, error, and server-down states
+
+**Key paths:**
 
 ```
-lib/
-core/
-models/
-repositories/
-screens/
-widgets/
-services/
-utils/
+mobile/lib/
+  core/config/api_config.dart    # API host per device mode
+  core/network/api_client.dart
+  controllers/                   # GetX
+  repositories/
+  screens/
+  widgets/
 ```
 
-## Design Principles
+**Navigation:** `DashboardScreen` → Library | Downloads | About (bottom nav). Search and Upload are pushed routes.
 
-- REST API
-- Clean Code
-- SOLID Principles
-- Repository Pattern
-- Separation of Concerns
-- Reusable Components
+---
 
-## Error Handling
+## Data flow
 
-All API errors use a single JSON envelope. See `API.md` for full schemas.
-
-```json
-{
-  "success": false,
-  "error": {
-    "code": "VALIDATION_FAILED",
-    "message": "Please correct the errors below.",
-    "details": [
-      { "field": "title", "code": "blank", "message": "Title can't be blank" }
-    ]
-  }
-}
+```
+Screen → GetX Controller → Repository → ApiClient (Dio) → Rails API
 ```
 
-- `error.code` — stable identifier for client logic (`NOT_FOUND`, `VALIDATION_FAILED`, etc.)
-- `error.message` — user-facing summary
-- `error.details` — optional field-level errors for forms
+Downloads also use `DownloadService` (SharedPreferences + app documents directory) for offline copies.
 
-Handled cases:
+---
 
-- Validation Errors → 422 + `VALIDATION_FAILED`
-- Not Found → 404 + `NOT_FOUND`
-- Network Errors → handled on Flutter client
-- Server Errors → 500 + `INTERNAL_SERVER_ERROR`
+## Design principles
 
-## Future Improvements
+- REST API with consistent JSON envelope
+- Repository pattern on Flutter
+- Service objects for non-trivial Rails actions
+- Separation of UI and business logic (GetX controllers)
+- Reusable widgets (book cards, shelf rows, reader chrome)
 
-- Authentication
-- EPUB Support
-- Cloud Storage
-- Last Read Position
-- Book Categories
+---
+
+## Error handling
+
+API errors use a single envelope — see [API.md](API.md).  
+Flutter maps these to snackbars, form field errors, and dedicated error/server-down screens.
+
+---
+
+## What is documented elsewhere
+
+| Topic | Document |
+|-------|----------|
+| Assignment coverage | [IMPLEMENTATION_STATUS.md](IMPLEMENTATION_STATUS.md) |
+| API endpoints | [API.md](API.md) |
+| Database schema | [DATABASE.md](DATABASE.md) |
+| Setup & IP config | [../README.md](../README.md) |

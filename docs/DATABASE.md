@@ -18,38 +18,43 @@ PostgreSQL
 | created_at | datetime | Yes | — | Record creation time |
 | updated_at | datetime | Yes | — | Last update time |
 
-PDF files are **not** stored in this table. Binary files use Active Storage.
+Ebook **files** and **covers** are not stored in this table. Binaries use Active Storage.
 
 File metadata (`filename`, `byte_size`, `content_type`) is read from `active_storage_blobs` at serializer/API time.
 
-## Active Storage Tables
+## Active Storage
 
-- `active_storage_blobs` — file key, filename, content_type, byte_size, service_name
-- `active_storage_attachments` — polymorphic link between `Ebook` and blob (`name: file`)
-- `active_storage_variant_records` — image variants (reserved for future cover thumbnails)
+| Attachment | Name | Purpose |
+|------------|------|---------|
+| Ebook file | `file` | PDF or EPUB blob |
+| Cover image | `cover` | Optional JPEG/PNG/WebP |
+
+Tables:
+
+- `active_storage_blobs` — key, filename, content_type, byte_size
+- `active_storage_attachments` — polymorphic link to `Ebook`
+- `active_storage_variant_records` — reserved for future image variants
 
 ## Relationships
 
 ```
 Ebook
-   │
-   └── has_one_attached :file
+   ├── has_one_attached :file
+   └── has_one_attached :cover
 ```
 
 ## Delete Strategy
 
-Soft delete via `status` enum (`active` → `deleted`). Phase 3 `DeleteEbookService` will mark records deleted; blobs remain until explicit purge policy is added.
+Soft delete via `status` enum (`active` → `deleted`). Deleted ebooks are excluded from list and search. Blobs remain until an explicit purge policy is added.
 
 ## Validations
 
 - Title required (max 255 characters)
 - Author optional (max 255 characters)
 - Description optional (max 5000 characters)
-- Status required (enum: active, deleted)
-- PDF required (`has_one_attached :file`)
-- PDF content type: `application/pdf` only
+- File required — PDF or EPUB only
 - Maximum file size: 100 MB
-- File must not be empty
+- Cover optional — image types only, max 10 MB
 
 ## Scopes
 
@@ -67,7 +72,9 @@ Soft delete via `status` enum (`active` → `deleted`). Phase 3 `DeleteEbookServ
 | `index_ebooks_on_created_at` | created_at | Recent ordering |
 | `index_ebooks_on_status` | status | Fast active-only queries |
 
-## Notes
+## Client-side persistence (Flutter)
 
-- Filename search uses `active_storage_blobs` JOIN (no denormalized filename column)
-- Integer enum for `status` is compact and index-friendly vs string column
+Not in PostgreSQL — stored on device:
+
+- **Recently read** — `SharedPreferences` (`RecentlyReadService`)
+- **Downloaded files** — app documents directory (`DownloadService`)
