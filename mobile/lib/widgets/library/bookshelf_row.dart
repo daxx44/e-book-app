@@ -108,12 +108,14 @@ class ShelfWallLabel extends StatelessWidget {
     this.progressLabel,
     this.showTitle = false,
     this.maxDescriptionLines = 2,
+    this.compact = false,
   });
 
   final Ebook ebook;
   final String? progressLabel;
   final bool showTitle;
   final int maxDescriptionLines;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
@@ -137,7 +139,7 @@ class ShelfWallLabel extends StatelessWidget {
           ),
           const SizedBox(height: 3),
         ],
-        if (hasDescription) ...[
+        if (!compact && hasDescription) ...[
           Text(
             ebook.description!.trim(),
             maxLines: maxDescriptionLines,
@@ -151,19 +153,21 @@ class ShelfWallLabel extends StatelessWidget {
           ),
           const SizedBox(height: 5),
         ],
-        Text(
-          _metaLine,
-          maxLines: 2,
-          overflow: TextOverflow.ellipsis,
-          textAlign: TextAlign.center,
-          style: theme.textTheme.labelSmall?.copyWith(
-            color: LibraryShelfTheme.headerMuted.withValues(alpha: 0.82),
-            fontSize: 10,
-            height: 1.3,
+        if (!compact) ...[
+          Text(
+            _metaLine,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.center,
+            style: theme.textTheme.labelSmall?.copyWith(
+              color: LibraryShelfTheme.headerMuted.withValues(alpha: 0.82),
+              fontSize: 10,
+              height: 1.3,
+            ),
           ),
-        ),
+        ],
         if (progressLabel != null) ...[
-          const SizedBox(height: 4),
+          SizedBox(height: compact ? 2 : 4),
           Text(
             progressLabel!,
             maxLines: 1,

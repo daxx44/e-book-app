@@ -1,3 +1,4 @@
+import 'package:frontend/core/network/api_exception.dart';
 import 'package:frontend/controllers/library_controller.dart';
 import 'package:frontend/models/ebook.dart';
 import 'package:frontend/repositories/ebook_repository.dart';
@@ -7,12 +8,16 @@ import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class FakeEbookRepository extends EbookRepository {
-  FakeEbookRepository(this.ebooks);
+  FakeEbookRepository(this.ebooks, {this.onFetch});
 
   final List<Ebook> ebooks;
+  final Future<List<Ebook>> Function()? onFetch;
 
   @override
-  Future<List<Ebook>> fetchEbooks({String sort = 'recent'}) async => ebooks;
+  Future<List<Ebook>> fetchEbooks({String sort = 'recent'}) async {
+    if (onFetch != null) return onFetch!();
+    return ebooks;
+  }
 }
 
 void main() {
@@ -53,5 +58,27 @@ void main() {
 
     expect(find.text('Book One'), findsWidgets);
     expect(find.text('My Library'), findsOneWidget);
+  });
+
+  testWidgets('LibraryScreen shows server down state when backend is unreachable', (tester) async {
+    Get.put(
+      LibraryController(
+        repository: FakeEbookRepository(
+          [],
+          onFetch: () => throw ApiException(
+            code: 'NETWORK_ERROR',
+            message: 'Unable to reach the server.',
+          ),
+        ),
+      ),
+    );
+
+    await tester.pumpWidget(const GetMaterialApp(home: LibraryScreen()));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+
+    expect(find.text('Server unavailable'), findsOneWidget);
+    expect(find.text('Try again'), findsOneWidget);
+    expect(find.text('Run the Rails API on port 3000'), findsOneWidget);
   });
 }

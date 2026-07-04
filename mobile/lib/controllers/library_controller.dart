@@ -25,11 +25,27 @@ class LibraryController extends GetxController {
   final RxList<Ebook> ebooks = <Ebook>[].obs;
   final RxList<RecentReadItem> recentlyRead = <RecentReadItem>[].obs;
   final RxString errorMessage = ''.obs;
+  final RxString errorCode = ''.obs;
+  final RxnInt errorStatusCode = RxnInt();
   final RxBool isDeleting = false.obs;
   final RxString sortBy = 'recent'.obs;
 
   bool _hasLoadedOnce = false;
   bool get hasLoadedOnce => _hasLoadedOnce;
+
+  bool get isServerUnreachable {
+    if (status.value != LibraryStatus.error) return false;
+
+    const unreachableCodes = {
+      'NETWORK_ERROR',
+      'TIMEOUT',
+      'SERVER_UNAVAILABLE',
+    };
+    if (unreachableCodes.contains(errorCode.value)) return true;
+
+    final code = errorStatusCode.value;
+    return code != null && code >= 502 && code < 600;
+  }
 
   @override
   void onInit() {
@@ -47,6 +63,8 @@ class LibraryController extends GetxController {
       status.value = LibraryStatus.loading;
     }
     errorMessage.value = '';
+    errorCode.value = '';
+    errorStatusCode.value = null;
 
     try {
       final results = await _repository.fetchEbooks(sort: sortBy.value);
@@ -56,12 +74,17 @@ class LibraryController extends GetxController {
       status.value = results.isEmpty ? LibraryStatus.empty : LibraryStatus.success;
     } on ApiException catch (error) {
       if (background && ebooks.isNotEmpty) return;
+      errorCode.value = error.code;
+      errorStatusCode.value = error.statusCode;
       errorMessage.value = error.message;
       status.value = LibraryStatus.error;
       _hasLoadedOnce = true;
     } catch (_) {
       if (background && ebooks.isNotEmpty) return;
-      errorMessage.value = 'Failed to load library.';
+      errorCode.value = 'NETWORK_ERROR';
+      errorStatusCode.value = null;
+      errorMessage.value =
+          'Unable to reach the server. Start the backend and check your API settings.';
       status.value = LibraryStatus.error;
       _hasLoadedOnce = true;
     }

@@ -3,6 +3,7 @@ import 'package:frontend/core/constants/app_spacing.dart';
 import 'package:frontend/core/theme/app_colors.dart';
 import 'package:frontend/core/theme/app_typography.dart';
 import 'package:frontend/core/theme/library_shelf_theme.dart';
+import 'package:frontend/widgets/library/shelf_library_header.dart';
 
 class SortMenu extends StatelessWidget {
   const SortMenu({
@@ -12,6 +13,7 @@ class SortMenu extends StatelessWidget {
     this.iconOnly = false,
     this.dark = false,
     this.showCurrentLabel = false,
+    this.shelfStyle = false,
   });
 
   final String value;
@@ -19,6 +21,7 @@ class SortMenu extends StatelessWidget {
   final bool iconOnly;
   final bool dark;
   final bool showCurrentLabel;
+  final bool shelfStyle;
 
   static const options = <String, String>{
     'recent': 'Recently added',
@@ -55,7 +58,7 @@ class SortMenu extends StatelessWidget {
         ),
       ),
       child: PopupMenuButton<String>(
-        tooltip: 'Sort results',
+        tooltip: 'Sort library',
         onSelected: onChanged,
         offset: const Offset(0, 44),
         color: menuBg,
@@ -82,10 +85,12 @@ class SortMenu extends StatelessWidget {
               ),
             )
             .toList(),
-        child: iconOnly
+        child: iconOnly && shelfStyle
+            ? const ShelfHeaderIconShell(icon: Icons.filter_list_rounded)
+            : iconOnly
             ? _SortButtonShell(
                 dark: dark,
-                child: Icon(Icons.tune_rounded, size: 22, color: fg),
+                child: Icon(Icons.filter_list_rounded, size: 22, color: fg),
               )
             : _SortButtonShell(
                 dark: dark,

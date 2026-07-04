@@ -7,14 +7,13 @@ import 'package:frontend/widgets/delete_confirmation_dialog.dart';
 import 'package:frontend/widgets/empty_state_widget.dart';
 import 'package:frontend/widgets/error_state_widget.dart';
 import 'package:frontend/widgets/library/bookshelf_row.dart';
+import 'package:frontend/widgets/library/library_server_down_state.dart';
 import 'package:frontend/widgets/library/shelf_library_header.dart';
 import 'package:frontend/widgets/library/wooden_shelf_background.dart';
 import 'package:frontend/widgets/loading_widget.dart';
 import 'package:frontend/widgets/recently_read_section.dart';
 import 'package:frontend/widgets/sort_menu.dart';
 import 'package:get/get.dart';
-
-import '../widgets/app_drawer.dart';
 
 class LibraryScreen extends GetView<LibraryController> {
   const LibraryScreen({super.key});
@@ -25,51 +24,51 @@ class LibraryScreen extends GetView<LibraryController> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: LibraryShelfTheme.woodDark,
-      drawer: const AppDrawer(),
-      floatingActionButton: FloatingActionButton(
-        onPressed: controller.openUpload,
-        backgroundColor: LibraryShelfTheme.fabBrown,
-        foregroundColor: Colors.white,
-        elevation: 6,
-        child: const Icon(Icons.add_rounded),
-      ),
+      floatingActionButton: Obx(() {
+        final hideFab = controller.isServerUnreachable && controller.ebooks.isEmpty;
+        if (hideFab) return const SizedBox.shrink();
+
+        return FloatingActionButton(
+          onPressed: controller.openUpload,
+          backgroundColor: LibraryShelfTheme.fabBrown,
+          foregroundColor: Colors.white,
+          elevation: 6,
+          child: const Icon(Icons.add_rounded),
+        );
+      }),
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       body: Stack(
         fit: StackFit.expand,
         children: [
           const WoodenShelfBackground(),
-          Builder(
-            builder: (scaffoldContext) {
-              return Obx(() {
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    ShelfLibraryHeader(
-                      bookCount: _headerBookCount(),
-                      onSearch: controller.openSearch,
-                      onMenu: () => Scaffold.of(scaffoldContext).openDrawer(),
-                      sortMenu: Obx(
-                        () => SortMenu(
-                          value: controller.sortBy.value,
-                          onChanged: controller.changeSort,
-                          iconOnly: true,
-                          dark: true,
-                        ),
-                      ),
+          Obx(() {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                ShelfLibraryHeader(
+                  bookCount: _headerBookCount(),
+                  onSearch: controller.openSearch,
+                  sortMenu: Obx(
+                    () => SortMenu(
+                      value: controller.sortBy.value,
+                      onChanged: controller.changeSort,
+                      iconOnly: true,
+                      dark: true,
+                      shelfStyle: true,
                     ),
-                    Expanded(
-                      child: AnimatedSwitcher(
-                        duration: const Duration(milliseconds: 350),
-                        switchInCurve: Curves.easeOutCubic,
-                        switchOutCurve: Curves.easeInCubic,
-                        child: _buildBody(scaffoldContext),
-                      ),
-                    ),
-                  ],
-                );
-              });
-            },
-          ),
+                  ),
+                ),
+                Expanded(
+                  child: AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 350),
+                    switchInCurve: Curves.easeOutCubic,
+                    switchOutCurve: Curves.easeInCubic,
+                    child: _buildBody(context),
+                  ),
+                ),
+              ],
+            );
+          }),
         ],
       ),
     );
@@ -83,6 +82,14 @@ class LibraryScreen extends GetView<LibraryController> {
 
     if (controller.status.value == LibraryStatus.error &&
         controller.ebooks.isEmpty) {
+      if (controller.isServerUnreachable) {
+        return LibraryServerDownState(
+          key: const ValueKey('server-down'),
+          message: controller.errorMessage.value,
+          onRetry: controller.loadEbooks,
+        );
+      }
+
       return ErrorStateWidget(
         key: const ValueKey('error'),
         message: controller.errorMessage.value,
@@ -132,7 +139,7 @@ class LibraryScreen extends GetView<LibraryController> {
               ),
             ),
             SliverPadding(
-              padding: const EdgeInsets.only(top: 8, bottom: 100),
+              padding: const EdgeInsets.only(bottom: 100),
               sliver: SliverList(
                 delegate: SliverChildBuilderDelegate(
                   (context, shelfIndex) => BookshelfRow(

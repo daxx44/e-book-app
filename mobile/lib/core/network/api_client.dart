@@ -123,15 +123,24 @@ class ApiClient {
     if (error.type == DioExceptionType.connectionError) {
       return ApiException(
         code: 'NETWORK_ERROR',
-        message: 'Unable to reach the server. Check your connection.',
+        message: 'Unable to reach the server. Make sure the backend is running.',
         statusCode: error.response?.statusCode,
+      );
+    }
+
+    final statusCode = error.response?.statusCode;
+    if (statusCode == 502 || statusCode == 503 || statusCode == 504) {
+      return ApiException(
+        code: 'SERVER_UNAVAILABLE',
+        message: 'The server is temporarily unavailable. Please try again shortly.',
+        statusCode: statusCode,
       );
     }
 
     return ApiException(
       code: 'INTERNAL_SERVER_ERROR',
       message: 'Something went wrong. Please try again.',
-      statusCode: error.response?.statusCode,
+      statusCode: statusCode,
     );
   }
 }

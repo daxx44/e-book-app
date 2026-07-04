@@ -43,7 +43,12 @@ class RecentlyReadSection extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(AppSpacing.md, AppSpacing.md, AppSpacing.md, AppSpacing.sm + 4),
+          padding: EdgeInsets.fromLTRB(
+            AppSpacing.md,
+            shelfStyle ? AppSpacing.sm : AppSpacing.md,
+            AppSpacing.md,
+            0,
+          ),
           child: Row(
             children: [
               Text(
@@ -149,20 +154,18 @@ class _ContinueReadingCard extends StatelessWidget {
                 ],
               ),
             ),
-            const SizedBox(height: 6),
+            const SizedBox(height: 4),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Flexible(
-                    child: ShelfWallLabel(
-                      ebook: ebook,
-                      progressLabel: '${item.progressPercent}% · $_timeLabel',
-                      showTitle: true,
-                      maxDescriptionLines: 1,
-                    ),
+                  ShelfWallLabel(
+                    ebook: ebook,
+                    progressLabel: '${item.progressPercent}% · $_timeLabel',
+                    showTitle: true,
+                    compact: true,
                   ),
-                  const SizedBox(height: 4),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [

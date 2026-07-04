@@ -8,13 +8,11 @@ class ShelfLibraryHeader extends StatelessWidget {
     super.key,
     required this.bookCount,
     required this.onSearch,
-    required this.onMenu,
     required this.sortMenu,
   });
 
   final int bookCount;
   final VoidCallback onSearch;
-  final VoidCallback onMenu;
   final Widget sortMenu;
 
   String get _countLabel {
@@ -36,15 +34,13 @@ class ShelfLibraryHeader extends StatelessWidget {
       child: Padding(
         padding: EdgeInsets.fromLTRB(
           AppSpacing.md,
-          MediaQuery.paddingOf(context).top + AppSpacing.sm,
+          MediaQuery.paddingOf(context).top + AppSpacing.xs,
           AppSpacing.md,
-          AppSpacing.md,
+          0,
         ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _ShelfHeaderIcon(icon: Icons.menu_rounded, onPressed: onMenu),
-            const SizedBox(width: AppSpacing.md),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -56,7 +52,7 @@ class ShelfLibraryHeader extends StatelessWidget {
                       fontWeight: FontWeight.w400,
                     ),
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 2),
                   Text(
                     _countLabel,
                     style: theme.textTheme.bodyMedium?.copyWith(
@@ -66,7 +62,7 @@ class ShelfLibraryHeader extends StatelessWidget {
                 ],
               ),
             ),
-            _ShelfHeaderIcon(icon: Icons.search_rounded, onPressed: onSearch),
+            ShelfHeaderIconButton(icon: Icons.search_rounded, onPressed: onSearch, tooltip: 'Search'),
             const SizedBox(width: AppSpacing.sm),
             sortMenu,
           ],
@@ -76,25 +72,51 @@ class ShelfLibraryHeader extends StatelessWidget {
   }
 }
 
-class _ShelfHeaderIcon extends StatelessWidget {
-  const _ShelfHeaderIcon({required this.icon, required this.onPressed});
+class ShelfHeaderIconButton extends StatelessWidget {
+  const ShelfHeaderIconButton({
+    super.key,
+    required this.icon,
+    required this.onPressed,
+    this.tooltip,
+  });
 
   final IconData icon;
-  final VoidCallback onPressed;
+  final VoidCallback? onPressed;
+  final String? tooltip;
+
+  @override
+  Widget build(BuildContext context) {
+    final shell = ShelfHeaderIconShell(icon: icon);
+
+    if (onPressed == null) return shell;
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onPressed,
+        borderRadius: BorderRadius.circular(12),
+        child: tooltip != null && tooltip!.isNotEmpty
+            ? Tooltip(message: tooltip!, child: shell)
+            : shell,
+      ),
+    );
+  }
+}
+
+class ShelfHeaderIconShell extends StatelessWidget {
+  const ShelfHeaderIconShell({super.key, required this.icon});
+
+  final IconData icon;
 
   @override
   Widget build(BuildContext context) {
     return Material(
       color: Colors.white.withValues(alpha: 0.08),
       borderRadius: BorderRadius.circular(12),
-      child: InkWell(
-        onTap: onPressed,
-        borderRadius: BorderRadius.circular(12),
-        child: SizedBox(
-          width: 42,
-          height: 42,
-          child: Icon(icon, color: LibraryShelfTheme.headerText, size: 22),
-        ),
+      child: SizedBox(
+        width: 42,
+        height: 42,
+        child: Icon(icon, color: LibraryShelfTheme.headerText, size: 22),
       ),
     );
   }
