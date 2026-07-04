@@ -1,6 +1,8 @@
 # Testing Guide
 
-How to run automated tests and what they cover. For assignment submission, also capture terminal output or a screenshot — see [test-results/TEST_RUN_OUTPUT.md](test-results/TEST_RUN_OUTPUT.md).
+How to run automated tests and what they cover.
+
+**Submission evidence:** Full terminal output is saved as plain-text logs in [test-results/](test-results/README.md) (`backend-test`, `backend-robocop`, `flutter-analyze`, `flutter-test`). A short summary is in [test-results/TEST_RUN_OUTPUT.md](test-results/TEST_RUN_OUTPUT.md).
 
 ---
 
@@ -94,9 +96,9 @@ GitHub Actions (`.github/workflows/ci.yml`):
 
 ## Screenshots for reviewers
 
-Save a terminal screenshot showing:
+Optional: save a terminal screenshot showing:
 
 1. `bundle exec rspec` → `0 failures`
 2. `flutter test` → `All tests passed!`
 
-Place in `docs/screenshots/07-tests.png` (see [screenshots/README.md](screenshots/README.md)).
+**Already submitted:** copy-pasted logs in `docs/test-results/` (see [test-results/README.md](test-results/README.md)). A combined PNG such as `docs/screenshots/07-tests.png` is optional.

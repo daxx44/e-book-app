@@ -2,7 +2,7 @@
 
 Captured on **4 July 2026** on the developer machine. Reviewers can reproduce with the commands below.
 
-> **Tip:** Run the same commands locally and save a terminal screenshot as `docs/screenshots/07-tests.png` for submission.
+> **Tip:** Terminal output can be saved as text files in `docs/test-results/` (see [README.md](README.md)) or as a screenshot `docs/screenshots/07-tests.png`.
 
 ---
 

@@ -110,7 +110,7 @@ flutter test
 - [ ] Flutter: all tests pass
 - [ ] `flutter analyze`: no issues
 
-See [test-results/TEST_RUN_OUTPUT.md](test-results/TEST_RUN_OUTPUT.md) for sample output.
+See [test-results/README.md](test-results/README.md) for pasted terminal logs (`backend-test`, `flutter-test`, etc.).
 
 ---
 

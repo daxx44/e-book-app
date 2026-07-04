@@ -52,7 +52,7 @@ This document maps the Sagar Fab International assignment requirements to what i
 | README with setup & tests | [`README.md`](../README.md) |
 | API documentation | [`API.md`](API.md) |
 | Manual testing checklist | [`MANUAL_TESTING.md`](MANUAL_TESTING.md) |
-| Automated test summary | [`TESTING.md`](TESTING.md), [`test-results/TEST_RUN_OUTPUT.md`](test-results/TEST_RUN_OUTPUT.md) |
+| Automated test summary | [`TESTING.md`](TESTING.md), [`test-results/README.md`](test-results/README.md) (pasted terminal logs) |
 | AI usage report | [`AI_USAGE.md`](AI_USAGE.md) |
 | Screenshots | [`screenshots/`](screenshots/README.md) |
 

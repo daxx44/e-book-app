@@ -11,6 +11,8 @@ Full-stack ebook library for uploading, browsing, searching, reading, downloadin
 
 **What is covered:** See [docs/IMPLEMENTATION_STATUS.md](docs/IMPLEMENTATION_STATUS.md) for assignment checklist vs implementation.
 
+**Demo included:** UI screenshots + screen recording in [`docs/screenshots/`](docs/screenshots/README.md); test logs in [`docs/test-results/`](docs/test-results/README.md).
+
 ---
 
 ## Project structure
@@ -189,6 +191,8 @@ With backend running and the app open:
 7. **Delete** — Delete on card → confirm dialog
 8. **About** — App info (bottom nav)
 
+**Recorded demo:** A screen capture and UI screenshots are included in the repository — see [Screenshots & demo](#screenshots--demo) below.
+
 ---
 
 ## Testing
@@ -308,9 +312,47 @@ Full reference: [docs/API.md](docs/API.md)
 
 ---
 
-## Screenshots
+## Screenshots & demo
 
-Save captures to [docs/screenshots/](docs/screenshots/README.md) including terminal output from `rspec` and `flutter test`.
+Demo media is **included in this repo** under `docs/screenshots/` (no external links required).
+
+### Demo video
+
+[docs/screenshots/screen-20260704-165340~2-compressed.mp4](docs/screenshots/screen-20260704-165340~2-compressed.mp4) — full walkthrough: upload, library, search, read, download, delete.
+
+> On GitHub: open the file above and use **Download** or **View raw** to play.
+
+### App screenshots
+
+| Flow | File |
+|------|------|
+| Library / home | [Screenshot_20260704-162616.png](docs/screenshots/Screenshot_20260704-162616.png) |
+| Upload | [Screenshot_20260704-162757.png](docs/screenshots/Screenshot_20260704-162757.png) |
+| Bookshelf | [Screenshot_20260704-162832.png](docs/screenshots/Screenshot_20260704-162832.png) |
+| Search | [Screenshot_20260704-162900.png](docs/screenshots/Screenshot_20260704-162900.png) |
+| Reader | [Screenshot_20260704-163531.png](docs/screenshots/Screenshot_20260704-163531.png) |
+| Download / details | [Screenshot_20260704-163544.png](docs/screenshots/Screenshot_20260704-163544.png) |
+| Delete confirmation | [Screenshot_20260704-163552.png](docs/screenshots/Screenshot_20260704-163552.png) |
+| Downloads / About | [Screenshot_20260704-165410.png](docs/screenshots/Screenshot_20260704-165410.png) |
+
+Preview (bookshelf):
+
+![Bookshelf library](docs/screenshots/Screenshot_20260704-162832.png)
+
+Full index: [docs/screenshots/README.md](docs/screenshots/README.md)
+
+### Automated test evidence
+
+Terminal output was copy-pasted into plain-text files (not screenshots):
+
+| Log file | Command |
+|----------|---------|
+| [docs/test-results/backend-test](docs/test-results/backend-test) | `bundle exec rspec` → 42 examples, 0 failures |
+| [docs/test-results/backend-robocop](docs/test-results/backend-robocop) | `bundle exec rubocop` |
+| [docs/test-results/flutter-analyze](docs/test-results/flutter-analyze) | `flutter analyze` → no issues |
+| [docs/test-results/flutter-test](docs/test-results/flutter-test) | `flutter test` → 15 passed |
+
+Index: [docs/test-results/README.md](docs/test-results/README.md)
 
 ---
 
@@ -339,9 +381,9 @@ See [docs/AI_USAGE.md](docs/AI_USAGE.md).
 | Implementation status | [docs/IMPLEMENTATION_STATUS.md](docs/IMPLEMENTATION_STATUS.md) |
 | API docs | [docs/API.md](docs/API.md) |
 | Manual testing | [docs/MANUAL_TESTING.md](docs/MANUAL_TESTING.md) |
-| Test results | [docs/test-results/TEST_RUN_OUTPUT.md](docs/test-results/TEST_RUN_OUTPUT.md) |
+| Test results (terminal logs) | [docs/test-results/README.md](docs/test-results/README.md) |
+| Demo screenshots & video | [docs/screenshots/](docs/screenshots/) |
 | AI usage report | [docs/AI_USAGE.md](docs/AI_USAGE.md) |
-| Screenshots | [docs/screenshots/](docs/screenshots/) |
 | CI | [.github/workflows/ci.yml](.github/workflows/ci.yml) |
 
 ---
