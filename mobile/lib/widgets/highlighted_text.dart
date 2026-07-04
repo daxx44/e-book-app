@@ -7,12 +7,16 @@ class HighlightedText extends StatelessWidget {
     this.query = '',
     this.style,
     this.maxLines,
+    this.highlightBackground,
+    this.highlightColor,
   });
 
   final String text;
   final String query;
   final TextStyle? style;
   final int? maxLines;
+  final Color? highlightBackground;
+  final Color? highlightColor;
 
   @override
   Widget build(BuildContext context) {
@@ -25,6 +29,9 @@ class HighlightedText extends StatelessWidget {
     final lowerQuery = normalizedQuery.toLowerCase();
     final spans = <TextSpan>[];
     var start = 0;
+    final baseStyle = style ?? DefaultTextStyle.of(context).style;
+    final highlightBg = highlightBackground ?? Theme.of(context).colorScheme.primaryContainer;
+    final highlightFg = highlightColor ?? baseStyle.color;
 
     while (true) {
       final index = lowerText.indexOf(lowerQuery, start);
@@ -36,9 +43,10 @@ class HighlightedText extends StatelessWidget {
       spans.add(
         TextSpan(
           text: text.substring(index, index + normalizedQuery.length),
-          style: (style ?? DefaultTextStyle.of(context).style).copyWith(
+          style: baseStyle.copyWith(
             fontWeight: FontWeight.bold,
-            backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+            color: highlightFg,
+            backgroundColor: highlightBg,
           ),
         ),
       );
@@ -48,7 +56,7 @@ class HighlightedText extends StatelessWidget {
     return RichText(
       maxLines: maxLines,
       overflow: TextOverflow.ellipsis,
-      text: TextSpan(style: style ?? DefaultTextStyle.of(context).style, children: spans),
+      text: TextSpan(style: baseStyle, children: spans),
     );
   }
 }

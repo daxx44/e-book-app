@@ -28,6 +28,8 @@ class EbookSearchController extends GetxController {
   final RxString errorMessage = ''.obs;
   final RxString sortBy = 'recent'.obs;
 
+  bool _hasSearchedOnce = false;
+
   void onQueryChanged(String value) {
     _debounce?.cancel();
     _debounce = Timer(AppConstants.searchDebounce, () => search(value));
@@ -41,19 +43,27 @@ class EbookSearchController extends GetxController {
       return;
     }
 
-    status.value = SearchStatus.loading;
+    final background = _hasSearchedOnce && results.isNotEmpty;
+    if (!background) {
+      status.value = SearchStatus.loading;
+    }
     errorMessage.value = '';
 
     try {
       final ebooks = await _repository.searchEbooks(trimmed, sort: sortBy.value);
       results.assignAll(ebooks);
+      _hasSearchedOnce = true;
       status.value = ebooks.isEmpty ? SearchStatus.empty : SearchStatus.success;
     } on ApiException catch (error) {
+      if (background) return;
       errorMessage.value = error.message;
       status.value = SearchStatus.error;
+      _hasSearchedOnce = true;
     } catch (_) {
+      if (background) return;
       errorMessage.value = 'Search failed. Please try again.';
       status.value = SearchStatus.error;
+      _hasSearchedOnce = true;
     }
   }
 

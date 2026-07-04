@@ -1,15 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:frontend/controllers/search_controller.dart';
 import 'package:frontend/core/constants/app_spacing.dart';
-import 'package:frontend/core/theme/app_colors.dart';
-import 'package:frontend/widgets/book_card.dart';
+import 'package:frontend/core/theme/library_shelf_theme.dart';
+import 'package:frontend/models/ebook.dart';
 import 'package:frontend/widgets/book_details_sheet.dart';
 import 'package:frontend/widgets/delete_confirmation_dialog.dart';
-import 'package:frontend/widgets/empty_illustration.dart';
-import 'package:frontend/widgets/empty_state_widget.dart';
-import 'package:frontend/widgets/error_state_widget.dart';
-import 'package:frontend/widgets/library_header.dart';
-import 'package:frontend/widgets/loading_widget.dart';
+import 'package:frontend/widgets/library/wooden_shelf_background.dart';
+import 'package:frontend/widgets/search/search_widgets.dart';
 import 'package:frontend/widgets/sort_menu.dart';
 import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -53,45 +51,80 @@ class _SearchScreenState extends State<SearchScreen> {
     if (value.trim().isNotEmpty) _saveRecentSearch(value);
   }
 
+  void _applySearchTerm(String term) {
+    controller.searchController.text = term;
+    controller.search(term);
+    _saveRecentSearch(term);
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: AppBar(
-        leading: IconButton(icon: const Icon(Icons.arrow_back_rounded), onPressed: Get.back),
-        title: const Text('Search'),
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle.light.copyWith(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.light,
+        statusBarBrightness: Brightness.dark,
       ),
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
-            child: PremiumSearchField(
-              controller: controller.searchController,
-              onChanged: _onSearchChanged,
-              autofocus: true,
+      child: Scaffold(
+        backgroundColor: LibraryShelfTheme.woodDark,
+        body: Stack(
+          fit: StackFit.expand,
+          children: [
+            const WoodenShelfBackground(),
+            SafeArea(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _SearchHeader(onBack: Get.back),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(AppSpacing.lg, 0, AppSpacing.lg, 10),
+                    child: ShelfSearchField(
+                      controller: controller.searchController,
+                      onChanged: _onSearchChanged,
+                      autofocus: true,
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+                    child: Obx(() {
+                      final count = controller.results.length;
+                      final isSuccess = controller.status.value == SearchStatus.success;
+                      return Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              isSuccess ? '$count ${count == 1 ? 'result' : 'results'}' : ' ',
+                              style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                                    color: LibraryShelfTheme.headerMuted,
+                                  ),
+                            ),
+                          ),
+                          SortMenu(
+                            value: controller.sortBy.value,
+                            onChanged: controller.changeSort,
+                            dark: true,
+                            showCurrentLabel: true,
+                          ),
+                        ],
+                      );
+                    }),
+                  ),
+                  const SizedBox(height: 6),
+                  Expanded(
+                    child: Obx(() {
+                      final query = controller.searchController.text;
+                      return AnimatedSwitcher(
+                        duration: const Duration(milliseconds: 280),
+                        switchInCurve: Curves.easeOutCubic,
+                        child: _buildResults(context, query),
+                      );
+                    }),
+                  ),
+                ],
+              ),
             ),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                Obx(() => SortMenu(value: controller.sortBy.value, onChanged: controller.changeSort)),
-              ],
-            ),
-          ),
-          Expanded(
-            child: Obx(() {
-              final query = controller.searchController.text;
-              return AnimatedSwitcher(
-                duration: const Duration(milliseconds: 320),
-                switchInCurve: Curves.easeOut,
-                child: _buildResults(context, query),
-              );
-            }),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -99,129 +132,131 @@ class _SearchScreenState extends State<SearchScreen> {
   Widget _buildResults(BuildContext context, String query) {
     switch (controller.status.value) {
       case SearchStatus.idle:
-        return _RecentSearchesView(
+        return SearchIdlePanel(
           key: const ValueKey('idle'),
           recentSearches: _recentSearches,
-          onTap: (term) {
-            controller.searchController.text = term;
-            controller.search(term);
-          },
+          onTermTap: _applySearchTerm,
         );
       case SearchStatus.loading:
-        return const LoadingWidget(key: ValueKey('loading'), variant: LoadingVariant.search);
+        if (controller.results.isNotEmpty) {
+          return _ResultsList(
+            key: ValueKey('results-loading-${controller.results.length}'),
+            query: query,
+            results: controller.results,
+            onOpen: (ebook) => _openDetails(context, ebook),
+          );
+        }
+        return const SearchListShimmer(key: ValueKey('loading'));
       case SearchStatus.error:
-        return ErrorStateWidget(
+        return SearchErrorState(
           key: const ValueKey('error'),
           message: controller.errorMessage.value,
           onRetry: () => controller.search(controller.searchController.text),
         );
       case SearchStatus.empty:
-        return EmptyStateWidget(
-          key: const ValueKey('empty'),
-          title: 'No matching books',
-          message: 'Try another title, author, or filename.',
-          icon: Icons.search_off_rounded,
-          illustration: const EmptyIllustration(icon: Icons.search_off_rounded),
-        );
+        return SearchEmptyState(key: const ValueKey('empty'), query: query);
       case SearchStatus.success:
-        return GridView.builder(
+        return _ResultsList(
           key: ValueKey('results-${controller.results.length}'),
-          padding: const EdgeInsets.all(20),
-          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: MediaQuery.sizeOf(context).width > 700 ? 3 : 2,
-            childAspectRatio: 0.58,
-            crossAxisSpacing: 16,
-            mainAxisSpacing: 16,
-          ),
-          itemCount: controller.results.length,
-          itemBuilder: (context, index) {
-            final ebook = controller.results[index];
-            return TweenAnimationBuilder<double>(
-              key: ValueKey('result-${ebook.id}'),
-              tween: Tween(begin: 0, end: 1),
-              duration: Duration(milliseconds: 280 + (index * 40).clamp(0, 200)),
-              curve: Curves.easeOutCubic,
-              builder: (context, opacity, child) => Opacity(opacity: opacity, child: child),
-              child: BookCard(
-                ebook: ebook,
-                highlightQuery: query,
-                onTap: () => showBookDetailsSheet(
-                  context,
-                  ebook: ebook,
-                  onRead: () => controller.openReader(ebook),
-                  onDownload: () => controller.downloadEbook(ebook),
-                  onDelete: () async {
-                    final confirmed = await showDeleteConfirmationDialog(context, ebook.title);
-                    if (confirmed == true) await controller.deleteEbook(ebook);
-                  },
-                ),
-                onRead: () => controller.openReader(ebook),
-                onDownload: () => controller.downloadEbook(ebook),
-                onDelete: () async {
-                  final confirmed = await showDeleteConfirmationDialog(context, ebook.title);
-                  if (confirmed == true) await controller.deleteEbook(ebook);
-                },
-              ),
-            );
-          },
+          query: query,
+          results: controller.results,
+          onOpen: (ebook) => _openDetails(context, ebook),
         );
     }
   }
+
+  void _openDetails(BuildContext context, ebook) {
+    showBookDetailsSheet(
+      context,
+      ebook: ebook,
+      onRead: () => controller.openReader(ebook),
+      onDownload: () => controller.downloadEbook(ebook),
+      onDelete: () async {
+        final confirmed = await showDeleteConfirmationDialog(context, ebook.title);
+        if (confirmed == true) await controller.deleteEbook(ebook);
+      },
+    );
+  }
 }
 
-class _RecentSearchesView extends StatelessWidget {
-  const _RecentSearchesView({
-    super.key,
-    required this.recentSearches,
-    required this.onTap,
-  });
+class _SearchHeader extends StatelessWidget {
+  const _SearchHeader({required this.onBack});
 
-  final List<String> recentSearches;
-  final ValueChanged<String> onTap;
+  final VoidCallback onBack;
 
   @override
   Widget build(BuildContext context) {
-    return ListView(
-      padding: const EdgeInsets.all(20),
-      children: [
-        Text('Suggestions', style: Theme.of(context).textTheme.titleMedium),
-        const SizedBox(height: 12),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: ['Fiction', 'Design', 'PDF', 'Guide']
-              .map(
-                (term) => ActionChip(
-                  label: Text(term),
-                  onPressed: () => onTap(term),
-                  backgroundColor: AppColors.surface,
-                  side: BorderSide(color: AppColors.secondary.withValues(alpha: 0.5)),
-                ),
-              )
-              .toList(),
-        ),
-        if (recentSearches.isNotEmpty) ...[
-          const SizedBox(height: AppSpacing.lg),
-          Text('Recent searches', style: Theme.of(context).textTheme.titleMedium),
-          const SizedBox(height: 12),
-          ...recentSearches.map(
-            (term) => ListTile(
-              contentPadding: EdgeInsets.zero,
-              leading: const Icon(Icons.history_rounded, color: AppColors.textMuted),
-              title: Text(term),
-              trailing: const Icon(Icons.north_west_rounded, size: 16, color: AppColors.textMuted),
-              onTap: () => onTap(term),
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(AppSpacing.md, AppSpacing.sm, AppSpacing.md, AppSpacing.md),
+      child: Row(
+        children: [
+          Material(
+            color: Colors.white.withValues(alpha: 0.08),
+            borderRadius: BorderRadius.circular(12),
+            child: InkWell(
+              onTap: onBack,
+              borderRadius: BorderRadius.circular(12),
+              child: const SizedBox(
+                width: 42,
+                height: 42,
+                child: Icon(Icons.arrow_back_rounded, color: LibraryShelfTheme.headerText, size: 22),
+              ),
             ),
           ),
-        ] else ...[
-          const SizedBox(height: AppSpacing.xxl),
-          const EmptyStateWidget(
-            title: 'Search your library',
-            message: 'Find books by title, author, or filename.',
-            icon: Icons.search_rounded,
+          const SizedBox(width: AppSpacing.md),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Search',
+                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                        color: LibraryShelfTheme.headerText,
+                        fontWeight: FontWeight.w400,
+                      ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Find titles across your shelf',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: LibraryShelfTheme.headerMuted,
+                      ),
+                ),
+              ],
+            ),
           ),
         ],
-      ],
+      ),
+    );
+  }
+}
+
+class _ResultsList extends StatelessWidget {
+  const _ResultsList({
+    super.key,
+    required this.query,
+    required this.results,
+    required this.onOpen,
+  });
+
+  final String query;
+  final List<Ebook> results;
+  final void Function(Ebook ebook) onOpen;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView.separated(
+      padding: const EdgeInsets.fromLTRB(AppSpacing.lg, 8, AppSpacing.lg, 100),
+      itemCount: results.length,
+      separatorBuilder: (_, __) => const SizedBox(height: 10),
+      itemBuilder: (context, index) {
+        final ebook = results[index];
+        return SearchResultTile(
+          ebook: ebook,
+          query: query,
+          onTap: () => onOpen(ebook),
+        );
+      },
     );
   }
 }
