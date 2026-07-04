@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:frontend/core/constants/app_spacing.dart';
 import 'package:frontend/core/theme/app_colors.dart';
 import 'package:frontend/routes/app_pages.dart';
+import 'package:frontend/widgets/app_icon.dart';
 import 'package:get/get.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -68,26 +69,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
                 children: [
                   ScaleTransition(
                     scale: _breathScale,
-                    child: Container(
-                      width: 120,
-                      height: 120,
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: [AppColors.primary, AppColors.accent],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
-                        borderRadius: BorderRadius.circular(AppSpacing.radiusXl),
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppColors.primary.withValues(alpha: 0.3),
-                            blurRadius: 32,
-                            offset: const Offset(0, 16),
-                          ),
-                        ],
-                      ),
-                      child: const Icon(Icons.auto_stories_rounded, size: 56, color: Colors.white),
-                    ),
+                    child: const AppIcon(size: 120, borderRadius: 28, showShadow: true),
                   ),
                   const SizedBox(height: AppSpacing.lg),
                   Text('Ebook Library', style: Theme.of(context).textTheme.displayMedium),

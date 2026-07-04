@@ -1,17 +1,15 @@
 import 'dart:async';
-import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:frontend/core/constants/app_constants.dart';
 import 'package:frontend/core/network/api_exception.dart';
 import 'package:frontend/core/utils/app_feedback.dart';
 import 'package:frontend/core/utils/app_haptics.dart';
+import 'package:frontend/core/utils/download_flow.dart';
 import 'package:frontend/models/ebook.dart';
 import 'package:frontend/repositories/ebook_repository.dart';
 import 'package:frontend/routes/app_pages.dart';
 import 'package:get/get.dart';
-import 'package:open_filex/open_filex.dart';
-import 'package:path_provider/path_provider.dart';
 
 enum SearchStatus { idle, loading, success, empty, error }
 
@@ -80,20 +78,7 @@ class EbookSearchController extends GetxController {
     Get.toNamed(AppRoutes.reader, arguments: ebook);
   }
 
-  Future<void> downloadEbook(Ebook ebook) async {
-    AppHaptics.light();
-    try {
-      final bytes = await _repository.downloadEbook(ebook.id);
-      final directory = await getApplicationDocumentsDirectory();
-      final safeName = ebook.filename ?? '${ebook.id}.pdf';
-      final savedPath = '${directory.path}/$safeName';
-      await File(savedPath).writeAsBytes(bytes, flush: true);
-      AppFeedback.success('Download complete', message: safeName);
-      await OpenFilex.open(savedPath);
-    } on ApiException catch (error) {
-      AppFeedback.error('Download failed', message: error.message);
-    }
-  }
+  Future<void> downloadEbook(Ebook ebook) => downloadEbookWithProgress(ebook);
 
   Future<void> deleteEbook(Ebook ebook) async {
     try {

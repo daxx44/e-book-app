@@ -5,8 +5,9 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   testWidgets('AboutScreen shows app and developer info', (tester) async {
     await tester.pumpWidget(const MaterialApp(home: AboutScreen()));
+    await tester.pumpAndSettle();
 
-    expect(find.text('About This App'), findsOneWidget);
+    expect(find.text('About'), findsOneWidget);
     expect(find.text('Digital Ebook Library'), findsOneWidget);
     expect(find.text('Version 1.0.0'), findsOneWidget);
     expect(find.text('Darshan Chaitanyswami'), findsOneWidget);

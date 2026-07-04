@@ -1,14 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/controllers/library_controller.dart';
 import 'package:frontend/core/theme/library_shelf_theme.dart';
-import 'package:frontend/core/utils/app_feedback.dart';
 import 'package:frontend/models/ebook.dart';
 import 'package:frontend/widgets/book_details_sheet.dart';
 import 'package:frontend/widgets/delete_confirmation_dialog.dart';
 import 'package:frontend/widgets/empty_state_widget.dart';
 import 'package:frontend/widgets/error_state_widget.dart';
 import 'package:frontend/widgets/library/bookshelf_row.dart';
-import 'package:frontend/widgets/library/library_bottom_nav.dart';
 import 'package:frontend/widgets/library/shelf_library_header.dart';
 import 'package:frontend/widgets/library/wooden_shelf_background.dart';
 import 'package:frontend/widgets/loading_widget.dart';
@@ -36,12 +34,6 @@ class LibraryScreen extends GetView<LibraryController> {
         child: const Icon(Icons.add_rounded),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
-      bottomNavigationBar: LibraryBottomNav(
-        current: LibraryNavItem.library,
-        onSearch: controller.openSearch,
-        onContinueReading: _continueReading,
-        onUpload: _showDownloadsHint,
-      ),
       body: Stack(
         fit: StackFit.expand,
         children: [
@@ -83,34 +75,14 @@ class LibraryScreen extends GetView<LibraryController> {
     );
   }
 
-  void _continueReading() {
-    final recent = controller.recentlyRead;
-    if (recent.isEmpty) {
-      AppFeedback.info(
-        'Reader',
-        message: 'Open a book from your shelf to start reading.',
-      );
-      return;
-    }
-    final ebook = controller.ebooksById[recent.first.ebookId];
-    if (ebook != null) {
-      controller.openReader(ebook);
-    }
-  }
-
-  void _showDownloadsHint() {
-    AppFeedback.info(
-      'Downloads',
-      message: 'Use the book menu on any title to save it to your device.',
-    );
-  }
-
   Widget _buildBody(BuildContext context) {
-    if (!controller.hasLoadedOnce && controller.status.value == LibraryStatus.loading) {
+    if (!controller.hasLoadedOnce &&
+        controller.status.value == LibraryStatus.loading) {
       return const LoadingWidget(key: ValueKey('loading'));
     }
 
-    if (controller.status.value == LibraryStatus.error && controller.ebooks.isEmpty) {
+    if (controller.status.value == LibraryStatus.error &&
+        controller.ebooks.isEmpty) {
       return ErrorStateWidget(
         key: const ValueKey('error'),
         message: controller.errorMessage.value,

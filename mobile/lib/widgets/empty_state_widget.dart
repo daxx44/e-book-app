@@ -11,7 +11,6 @@ class EmptyStateWidget extends StatelessWidget {
     required this.message,
     this.actionLabel,
     this.onAction,
-    this.icon = Icons.auto_stories_outlined,
     this.illustration,
   });
 
@@ -19,7 +18,6 @@ class EmptyStateWidget extends StatelessWidget {
   final String message;
   final String? actionLabel;
   final VoidCallback? onAction;
-  final IconData icon;
   final Widget? illustration;
 
   @override
@@ -35,7 +33,7 @@ class EmptyStateWidget extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              illustration ?? EmptyIllustration(icon: icon),
+              illustration ?? const EmptyIllustration(),
               const SizedBox(height: AppSpacing.lg),
               Text(title, style: Theme.of(context).textTheme.headlineMedium, textAlign: TextAlign.center),
               const SizedBox(height: AppSpacing.sm),

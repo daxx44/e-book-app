@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:frontend/core/constants/app_spacing.dart';
 import 'package:frontend/core/theme/app_colors.dart';
+import 'package:frontend/widgets/app_icon.dart';
 
-/// Decorative illustration for empty states — stacked books motif.
+/// Decorative illustration for empty states — app icon with book accents.
 class EmptyIllustration extends StatelessWidget {
-  const EmptyIllustration({super.key, this.icon = Icons.auto_stories_rounded});
-
-  final IconData icon;
+  const EmptyIllustration({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -36,26 +34,7 @@ class EmptyIllustration extends StatelessWidget {
               height: 68,
             ),
           ),
-          Container(
-            width: 100,
-            height: 100,
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [AppColors.primary, AppColors.accent],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius: BorderRadius.circular(AppSpacing.radiusXl),
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.primary.withValues(alpha: 0.22),
-                  blurRadius: 28,
-                  offset: const Offset(0, 14),
-                ),
-              ],
-            ),
-            child: Icon(icon, size: 48, color: Colors.white),
-          ),
+          const AppIcon(size: 100, borderRadius: 24, showShadow: true),
         ],
       ),
     );

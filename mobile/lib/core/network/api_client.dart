@@ -65,11 +65,15 @@ class ApiClient {
     }
   }
 
-  Future<List<int>> downloadBytes(String path) async {
+  Future<List<int>> downloadBytes(
+    String path, {
+    void Function(int received, int total)? onReceiveProgress,
+  }) async {
     try {
       final response = await _dio.get<List<int>>(
         path,
         options: Options(responseType: ResponseType.bytes),
+        onReceiveProgress: onReceiveProgress,
       );
       return response.data ?? [];
     } on DioException catch (error) {

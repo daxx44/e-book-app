@@ -1,15 +1,13 @@
 import 'package:frontend/core/services/recently_read_service.dart';
 import 'package:frontend/core/utils/app_feedback.dart';
 import 'package:frontend/core/utils/app_haptics.dart';
+import 'package:frontend/core/utils/download_flow.dart';
 import 'package:frontend/core/network/api_exception.dart';
 import 'package:frontend/models/ebook.dart';
 import 'package:frontend/models/recent_read_entry.dart';
 import 'package:frontend/repositories/ebook_repository.dart';
 import 'package:frontend/routes/app_pages.dart';
 import 'package:get/get.dart';
-import 'package:open_filex/open_filex.dart';
-import 'package:path_provider/path_provider.dart';
-import 'dart:io';
 
 enum LibraryStatus { loading, success, empty, error }
 
@@ -28,7 +26,6 @@ class LibraryController extends GetxController {
   final RxList<RecentReadItem> recentlyRead = <RecentReadItem>[].obs;
   final RxString errorMessage = ''.obs;
   final RxBool isDeleting = false.obs;
-  final RxBool isDownloading = false.obs;
   final RxString sortBy = 'recent'.obs;
 
   bool _hasLoadedOnce = false;
@@ -88,27 +85,7 @@ class LibraryController extends GetxController {
     }
   }
 
-  Future<void> downloadEbook(Ebook ebook) async {
-    isDownloading.value = true;
-    AppHaptics.light();
-    try {
-      final bytes = await _repository.downloadEbook(ebook.id);
-      final directory = await getApplicationDocumentsDirectory();
-      final safeName = ebook.filename ?? '${ebook.id}${ebook.fileExtension}';
-      final savedPath = '${directory.path}/$safeName';
-      final file = File(savedPath);
-      await file.writeAsBytes(bytes, flush: true);
-
-      AppFeedback.success('Download complete', message: safeName);
-      await OpenFilex.open(savedPath);
-    } on ApiException catch (error) {
-      AppFeedback.error('Download failed', message: error.message);
-    } catch (_) {
-      AppFeedback.error('Download failed', message: 'Please try again.');
-    } finally {
-      isDownloading.value = false;
-    }
-  }
+  Future<void> downloadEbook(Ebook ebook) => downloadEbookWithProgress(ebook);
 
   void changeSort(String value) {
     sortBy.value = value;

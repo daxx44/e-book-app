@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/controllers/dashboard_controller.dart';
 import 'package:frontend/core/constants/about_info.dart';
 import 'package:frontend/core/constants/app_spacing.dart';
 import 'package:frontend/core/theme/app_colors.dart';
 import 'package:frontend/core/utils/app_haptics.dart';
 import 'package:frontend/routes/app_pages.dart';
+import 'package:frontend/widgets/app_icon.dart';
 import 'package:get/get.dart';
 
 class AppDrawer extends StatelessWidget {
@@ -24,17 +26,7 @@ class AppDrawer extends StatelessWidget {
               padding: const EdgeInsets.fromLTRB(24, 20, 24, 16),
               child: Row(
                 children: [
-                  Container(
-                    width: 48,
-                    height: 48,
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [AppColors.primary, AppColors.accent],
-                      ),
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    child: const Icon(Icons.menu_book_rounded, color: Colors.white),
-                  ),
+                  const AppIcon(size: 48, borderRadius: 14),
                   const SizedBox(width: 14),
                   Expanded(
                     child: Column(
@@ -52,10 +44,15 @@ class AppDrawer extends StatelessWidget {
             _DrawerTile(
               icon: Icons.library_books_outlined,
               label: 'My Library',
-              selected: Get.currentRoute == AppRoutes.library,
+              selected: Get.isRegistered<DashboardController>() &&
+                  Get.find<DashboardController>().currentIndex.value ==
+                      DashboardController.tabLibrary,
               onTap: () {
                 AppHaptics.selection();
                 Navigator.pop(context);
+                if (Get.isRegistered<DashboardController>()) {
+                  Get.find<DashboardController>().selectTab(DashboardController.tabLibrary);
+                }
               },
             ),
             _DrawerTile(
@@ -79,10 +76,15 @@ class AppDrawer extends StatelessWidget {
             _DrawerTile(
               icon: Icons.info_outline_rounded,
               label: 'About',
+              selected: Get.isRegistered<DashboardController>() &&
+                  Get.find<DashboardController>().currentIndex.value ==
+                      DashboardController.tabAbout,
               onTap: () {
                 AppHaptics.light();
                 Navigator.pop(context);
-                Get.toNamed(AppRoutes.about);
+                if (Get.isRegistered<DashboardController>()) {
+                  Get.find<DashboardController>().selectTab(DashboardController.tabAbout);
+                }
               },
             ),
             const Spacer(),

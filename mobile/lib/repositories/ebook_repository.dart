@@ -61,7 +61,13 @@ class EbookRepository {
     await _apiClient.delete('/ebooks/$id');
   }
 
-  Future<List<int>> downloadEbook(int id) async {
-    return _apiClient.downloadBytes('/ebooks/$id/download');
+  Future<List<int>> downloadEbook(
+    int id, {
+    void Function(int received, int total)? onReceiveProgress,
+  }) {
+    return _apiClient.downloadBytes(
+      '/ebooks/$id/download',
+      onReceiveProgress: onReceiveProgress,
+    );
   }
 }
