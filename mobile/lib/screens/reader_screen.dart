@@ -6,10 +6,10 @@ import 'package:flutter/services.dart';
 import 'package:frontend/controllers/reader_controller.dart';
 import 'package:frontend/core/theme/reader_theme.dart';
 import 'package:frontend/widgets/delete_confirmation_dialog.dart';
-import 'package:frontend/widgets/error_state_widget.dart';
-import 'package:frontend/widgets/loading_widget.dart';
 import 'package:frontend/widgets/reader/reader_content_header.dart';
+import 'package:frontend/widgets/reader/reader_error_state.dart';
 import 'package:frontend/widgets/reader/reader_progress_footer.dart';
+import 'package:frontend/widgets/loading_widget.dart';
 import 'package:frontend/widgets/reader/reader_settings_sheet.dart';
 import 'package:frontend/widgets/reader/reader_toolbar.dart';
 import 'package:frontend/widgets/safe_epub_chapter_builder.dart';
@@ -50,7 +50,7 @@ class ReaderScreen extends GetView<ReaderController> {
                   () => ReaderProgressFooter(
                     currentLabel: controller.progressLabel,
                     progress: controller.progress,
-                    percentText: '${controller.progressPercent}% Complete',
+                    percentText: '${controller.progressPercent}%',
                   ),
                 ),
             ],
@@ -65,7 +65,7 @@ class ReaderScreen extends GetView<ReaderController> {
       case ReaderStatus.loading:
         return const LoadingWidget(key: ValueKey('loading'), variant: LoadingVariant.reader);
       case ReaderStatus.error:
-        return ErrorStateWidget(
+        return ReaderErrorState(
           key: const ValueKey('error'),
           message: controller.errorMessage.value,
           onRetry: controller.reload,
@@ -79,15 +79,16 @@ class ReaderScreen extends GetView<ReaderController> {
   }
 
   Widget _buildPdfViewer(BuildContext context) {
-    return ColoredBox(
+    return DecoratedBox(
       key: const ValueKey('pdf-reader'),
-      color: ReaderTheme.canvasBackground,
+      decoration: const BoxDecoration(gradient: ReaderTheme.canvasGradient),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Obx(
             () => ReaderContentHeader(
               title: controller.ebook.title,
+              author: controller.ebook.author,
               subtitle: controller.headerSubtitle,
             ),
           ),
@@ -118,22 +119,23 @@ class ReaderScreen extends GetView<ReaderController> {
   Widget _buildEpubViewer(BuildContext context) {
     final epubCtrl = controller.epubController;
     if (epubCtrl == null) {
-      return ErrorStateWidget(
+      return ReaderErrorState(
         key: const ValueKey('epub-error'),
         message: 'Failed to load EPUB content.',
         onRetry: controller.reload,
       );
     }
 
-    return ColoredBox(
+    return DecoratedBox(
       key: const ValueKey('epub-reader'),
-      color: ReaderTheme.canvasBackground,
+      decoration: const BoxDecoration(gradient: ReaderTheme.canvasGradient),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Obx(
             () => ReaderContentHeader(
               title: controller.ebook.title,
+              author: controller.ebook.author,
               subtitle: controller.headerSubtitle,
             ),
           ),

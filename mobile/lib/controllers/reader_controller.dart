@@ -67,7 +67,7 @@ class ReaderController extends GetxController {
       return currentChapter.value;
     }
     if (totalPages.value > 0) {
-      return 'PAGE ${savedPage.value}';
+      return 'Page ${savedPage.value}';
     }
     return ebook.fileTypeLabel.toUpperCase();
   }

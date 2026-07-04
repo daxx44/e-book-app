@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/core/constants/app_spacing.dart';
-import 'package:frontend/core/theme/app_colors.dart';
 import 'package:frontend/core/theme/reader_theme.dart';
 
 class ReaderChaptersSheet extends StatelessWidget {
@@ -18,8 +17,9 @@ class ReaderChaptersSheet extends StatelessWidget {
     return Container(
       constraints: BoxConstraints(maxHeight: MediaQuery.sizeOf(context).height * 0.7),
       decoration: const BoxDecoration(
-        color: AppColors.surface,
+        color: ReaderTheme.toolbarBackground,
         borderRadius: BorderRadius.vertical(top: Radius.circular(AppSpacing.radiusXl)),
+        border: Border(top: BorderSide(color: ReaderTheme.borderColor)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -29,7 +29,7 @@ class ReaderChaptersSheet extends StatelessWidget {
             width: 40,
             height: 4,
             decoration: BoxDecoration(
-              color: AppColors.secondary,
+              color: ReaderTheme.borderColor,
               borderRadius: BorderRadius.circular(2),
             ),
           ),
@@ -39,25 +39,30 @@ class ReaderChaptersSheet extends StatelessWidget {
               children: [
                 Icon(Icons.menu_book_rounded, color: ReaderTheme.iconColor, size: 22),
                 const SizedBox(width: 10),
-                Text('Chapters', style: Theme.of(context).textTheme.titleLarge),
+                Text('Chapters', style: ReaderTheme.titleSerif.copyWith(fontSize: 20)),
               ],
             ),
           ),
-          const Divider(height: 1),
+          const Divider(height: 1, color: ReaderTheme.borderColor),
           Flexible(
             child: chapters.isEmpty
                 ? Padding(
                     padding: const EdgeInsets.all(24),
                     child: Text(
                       'No chapters available.',
-                      style: Theme.of(context).textTheme.bodyMedium,
+                      style: ReaderTheme.authorStyle,
                     ),
                   )
                 : ListView.separated(
                     shrinkWrap: true,
                     padding: const EdgeInsets.symmetric(vertical: 8),
                     itemCount: chapters.length,
-                    separatorBuilder: (_, __) => const Divider(height: 1, indent: 20, endIndent: 20),
+                    separatorBuilder: (_, __) => const Divider(
+                      height: 1,
+                      indent: 20,
+                      endIndent: 20,
+                      color: ReaderTheme.borderColor,
+                    ),
                     itemBuilder: (context, index) {
                       final chapter = chapters[index];
                       final title = chapter.title;
@@ -68,10 +73,13 @@ class ReaderChaptersSheet extends StatelessWidget {
                           backgroundColor: ReaderTheme.footerBackground,
                           child: Text(
                             '${index + 1}',
-                            style: Theme.of(context).textTheme.labelSmall,
+                            style: ReaderTheme.footerLabelStyle.copyWith(fontSize: 11),
                           ),
                         ),
-                        title: Text(title ?? 'Chapter ${index + 1}'),
+                        title: Text(
+                          title ?? 'Chapter ${index + 1}',
+                          style: ReaderTheme.toolbarTitleStyle.copyWith(fontSize: 14),
+                        ),
                         onTap: () => onSelect(startIndex),
                       );
                     },

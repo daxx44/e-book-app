@@ -17,35 +17,40 @@ class ReaderProgressFooter extends StatelessWidget {
   Widget build(BuildContext context) {
     final clampedProgress = progress.clamp(0.0, 1.0);
 
-    return Material(
-      color: ReaderTheme.footerBackground,
+    return DecoratedBox(
+      decoration: const BoxDecoration(
+        color: ReaderTheme.footerBackground,
+        border: Border(top: BorderSide(color: ReaderTheme.borderColor)),
+      ),
       child: SafeArea(
         top: false,
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(24, 16, 24, 18),
+          padding: const EdgeInsets.fromLTRB(24, 14, 24, 16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text('PROGRESS', style: ReaderTheme.footerLabelStyle),
-              const SizedBox(height: 6),
               Row(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Expanded(
-                    child: Text(
-                      currentLabel,
-                      style: ReaderTheme.footerPageStyle,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Reading progress', style: ReaderTheme.footerLabelStyle),
+                        const SizedBox(height: 4),
+                        Text(currentLabel, style: ReaderTheme.footerPageStyle),
+                      ],
                     ),
                   ),
                   Text(percentText, style: ReaderTheme.footerPercentStyle),
                 ],
               ),
-              const SizedBox(height: 14),
+              const SizedBox(height: 12),
               ClipRRect(
-                borderRadius: BorderRadius.circular(2),
+                borderRadius: BorderRadius.circular(4),
                 child: LinearProgressIndicator(
-                  value: clampedProgress,
-                  minHeight: 4,
+                  value: clampedProgress > 0 ? clampedProgress : null,
+                  minHeight: 6,
                   backgroundColor: ReaderTheme.progressTrack,
                   color: ReaderTheme.progressFill,
                 ),

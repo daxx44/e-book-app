@@ -60,6 +60,7 @@ class RecentlyReadSection extends StatelessWidget {
             ],
           ),
         ),
+        const SizedBox(height: AppSpacing.lg),
         SizedBox(
           height: ShelfMetrics.continueReadingStripHeight,
           child: ListView.separated(
